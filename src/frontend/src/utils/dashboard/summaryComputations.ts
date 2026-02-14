@@ -1,183 +1,179 @@
 import type { Task, Goal, CalendarEntry, BudgetItem } from '@/backend';
-import type { SummaryMode } from '@/hooks/dashboard/useDashboardSummaryPreferences';
+import { formatCentsAsCurrency } from '@/utils/money';
 
-interface SummaryStat {
-  label: string;
-  value: string | number;
-}
+export type SummaryMode = 'stats' | 'recent';
 
-interface SummaryResult {
-  stats: SummaryStat[];
+export interface TasksSummary {
+  stats: Array<{ label: string; value: string | number }>;
   secondary?: string;
   isEmpty: boolean;
+  completed: number;
+  pending: number;
+  total: number;
+  recentTasks?: Task[];
 }
 
-export function computeTasksSummary(tasks: Task[], mode: SummaryMode): SummaryResult {
-  if (tasks.length === 0) {
-    return { stats: [], isEmpty: true };
-  }
+export interface GoalsSummary {
+  stats: Array<{ label: string; value: string | number }>;
+  secondary?: string;
+  isEmpty: boolean;
+  total: number;
+  inProgress: number;
+  completed: number;
+  recentGoals?: Goal[];
+}
 
-  if (mode === 'stats') {
-    const completed = tasks.filter((t) => t.completed).length;
-    const pending = tasks.length - completed;
-    const overdue = tasks.filter(
-      (t) => !t.completed && t.dueDate && Number(t.dueDate) < Date.now() * 1_000_000
-    ).length;
+export interface CalendarSummary {
+  stats: Array<{ label: string; value: string | number }>;
+  secondary?: string;
+  isEmpty: boolean;
+  total: number;
+  upcoming: number;
+  today: number;
+  recentEntries?: CalendarEntry[];
+}
 
-    return {
-      stats: [
-        { label: 'Total', value: tasks.length },
-        { label: 'Completed', value: completed },
-        { label: 'Pending', value: pending },
-        ...(overdue > 0 ? [{ label: 'Overdue', value: overdue }] : []),
-      ],
-      isEmpty: false,
-    };
-  } else {
-    // Recent mode
+export interface BudgetSummary {
+  stats: Array<{ label: string; value: string | number }>;
+  secondary?: string;
+  isEmpty: boolean;
+  income: string;
+  expenses: string;
+  net: string;
+  recentItems?: BudgetItem[];
+}
+
+export function computeTasksSummary(tasks: Task[], mode: SummaryMode = 'stats'): TasksSummary {
+  const completed = tasks.filter((t) => t.completed).length;
+  const pending = tasks.filter((t) => !t.completed).length;
+  const total = tasks.length;
+  const isEmpty = total === 0;
+
+  const stats = [
+    { label: 'Total', value: total },
+    { label: 'Completed', value: completed },
+    { label: 'Pending', value: pending },
+  ];
+
+  if (mode === 'recent') {
     const recentTasks = [...tasks]
-      .sort((a, b) => Number(b.createdAt - a.createdAt))
+      .sort((a, b) => Number(b.createdAt) - Number(a.createdAt))
       .slice(0, 3);
-    const recentTask = recentTasks[0];
+    
+    const secondary = recentTasks.length > 0
+      ? `Recent: ${recentTasks[0].description.substring(0, 40)}${recentTasks[0].description.length > 40 ? '...' : ''}`
+      : undefined;
 
-    return {
-      stats: [
-        { label: 'Total', value: tasks.length },
-        { label: 'Completed', value: tasks.filter((t) => t.completed).length },
-      ],
-      secondary: recentTask ? `Latest: ${recentTask.description}` : undefined,
-      isEmpty: false,
-    };
+    return { stats, secondary, isEmpty, completed, pending, total, recentTasks };
   }
+
+  return { stats, isEmpty, completed, pending, total };
 }
 
-export function computeGoalsSummary(goals: Goal[], mode: SummaryMode): SummaryResult {
-  if (goals.length === 0) {
-    return { stats: [], isEmpty: true };
+export function computeGoalsSummary(goals: Goal[], mode: SummaryMode = 'stats'): GoalsSummary {
+  const total = goals.length;
+  const completed = goals.filter((g) => Number(g.progress) >= 100).length;
+  const inProgress = goals.filter((g) => Number(g.progress) > 0 && Number(g.progress) < 100).length;
+  const isEmpty = total === 0;
+
+  const stats = [
+    { label: 'Total', value: total },
+    { label: 'In Progress', value: inProgress },
+    { label: 'Completed', value: completed },
+  ];
+
+  if (mode === 'recent') {
+    const recentGoals = [...goals]
+      .sort((a, b) => Number(b.progress) - Number(a.progress))
+      .slice(0, 3);
+    
+    const secondary = recentGoals.length > 0
+      ? `Top: ${recentGoals[0].title.substring(0, 40)}${recentGoals[0].title.length > 40 ? '...' : ''}`
+      : undefined;
+
+    return { stats, secondary, isEmpty, total, inProgress, completed, recentGoals };
   }
 
-  if (mode === 'stats') {
-    const avgProgress =
-      goals.length > 0
-        ? Math.round(goals.reduce((sum, g) => sum + Number(g.progress), 0) / goals.length)
-        : 0;
-    const completed = goals.filter((g) => Number(g.progress) >= 100).length;
-
-    return {
-      stats: [
-        { label: 'Total', value: goals.length },
-        { label: 'Completed', value: completed },
-        { label: 'Avg Progress', value: `${avgProgress}%` },
-      ],
-      isEmpty: false,
-    };
-  } else {
-    // Recent mode
-    const recentGoal = goals[goals.length - 1];
-
-    return {
-      stats: [
-        { label: 'Total', value: goals.length },
-        { label: 'Avg Progress', value: `${Math.round(goals.reduce((sum, g) => sum + Number(g.progress), 0) / goals.length)}%` },
-      ],
-      secondary: recentGoal ? `Latest: ${recentGoal.title}` : undefined,
-      isEmpty: false,
-    };
-  }
+  return { stats, isEmpty, total, inProgress, completed };
 }
 
-export function computeCalendarSummary(
-  entries: CalendarEntry[],
-  mode: SummaryMode
-): SummaryResult {
-  if (entries.length === 0) {
-    return { stats: [], isEmpty: true };
+export function computeCalendarSummary(entries: CalendarEntry[], mode: SummaryMode = 'stats'): CalendarSummary {
+  const now = Date.now() * 1000000;
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayStartNano = BigInt(todayStart.getTime() * 1000000);
+  const todayEndNano = BigInt((todayStart.getTime() + 86400000) * 1000000);
+
+  const total = entries.length;
+  const upcoming = entries.filter((e) => Number(e.startTime) > now).length;
+  const today = entries.filter(
+    (e) => e.startTime >= todayStartNano && e.startTime < todayEndNano
+  ).length;
+  const isEmpty = total === 0;
+
+  const stats = [
+    { label: 'Total', value: total },
+    { label: 'Today', value: today },
+    { label: 'Upcoming', value: upcoming },
+  ];
+
+  if (mode === 'recent') {
+    const recentEntries = [...entries]
+      .sort((a, b) => Number(b.startTime) - Number(a.startTime))
+      .slice(0, 3);
+    
+    const secondary = recentEntries.length > 0
+      ? `Recent: ${recentEntries[0].title.substring(0, 40)}${recentEntries[0].title.length > 40 ? '...' : ''}`
+      : undefined;
+
+    return { stats, secondary, isEmpty, total, upcoming, today, recentEntries };
   }
 
-  const now = Date.now() * 1_000_000;
-  const upcoming = entries.filter((e) => Number(e.startTime) > now);
-  const today = entries.filter((e) => {
-    const startDate = new Date(Number(e.startTime) / 1_000_000);
-    const todayDate = new Date();
-    return (
-      startDate.getDate() === todayDate.getDate() &&
-      startDate.getMonth() === todayDate.getMonth() &&
-      startDate.getFullYear() === todayDate.getFullYear()
-    );
-  });
-
-  if (mode === 'stats') {
-    return {
-      stats: [
-        { label: 'Total', value: entries.length },
-        { label: 'Today', value: today.length },
-        { label: 'Upcoming', value: upcoming.length },
-      ],
-      isEmpty: false,
-    };
-  } else {
-    // Recent mode
-    const nextEvent = upcoming.sort((a, b) => Number(a.startTime - b.startTime))[0];
-
-    return {
-      stats: [
-        { label: 'Total', value: entries.length },
-        { label: 'Upcoming', value: upcoming.length },
-      ],
-      secondary: nextEvent
-        ? `Next: ${nextEvent.title} on ${new Date(Number(nextEvent.startTime) / 1_000_000).toLocaleDateString()}`
-        : 'No upcoming events',
-      isEmpty: false,
-    };
-  }
+  return { stats, isEmpty, total, upcoming, today };
 }
 
-export function computeBudgetSummary(items: BudgetItem[], mode: SummaryMode): SummaryResult {
-  if (items.length === 0) {
-    return { stats: [], isEmpty: true };
-  }
-
+export function computeBudgetSummary(items: BudgetItem[], mode: SummaryMode = 'stats'): BudgetSummary {
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
   const currentMonthItems = items.filter((item) => {
-    const itemDate = new Date(Number(item.date) / 1_000_000);
+    const itemDate = new Date(Number(item.date) / 1000000);
     return itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear;
   });
 
-  const income = currentMonthItems
+  const incomeAmount = currentMonthItems
     .filter((item) => item.itemType === 'income')
     .reduce((sum, item) => sum + Number(item.amount), 0);
 
-  const expenses = currentMonthItems
+  const expensesAmount = currentMonthItems
     .filter((item) => item.itemType === 'expense')
     .reduce((sum, item) => sum + Number(item.amount), 0);
 
-  const net = income - expenses;
+  const netAmount = incomeAmount - expensesAmount;
 
-  if (mode === 'stats') {
-    return {
-      stats: [
-        { label: 'Income', value: `$${income.toLocaleString()}` },
-        { label: 'Expenses', value: `$${expenses.toLocaleString()}` },
-        { label: 'Net', value: `$${net.toLocaleString()}` },
-      ],
-      isEmpty: false,
-    };
-  } else {
-    // Recent mode
-    const recentItem = [...items].sort((a, b) => Number(b.date - a.date))[0];
+  const income = formatCentsAsCurrency(incomeAmount);
+  const expenses = formatCentsAsCurrency(expensesAmount);
+  const net = formatCentsAsCurrency(netAmount);
+  const isEmpty = items.length === 0;
 
-    return {
-      stats: [
-        { label: 'This Month', value: currentMonthItems.length },
-        { label: 'Net', value: `$${net.toLocaleString()}` },
-      ],
-      secondary: recentItem
-        ? `Latest: ${recentItem.description} ($${Number(recentItem.amount).toLocaleString()})`
-        : undefined,
-      isEmpty: false,
-    };
+  const stats = [
+    { label: 'Income', value: income },
+    { label: 'Expenses', value: expenses },
+    { label: 'Net', value: net },
+  ];
+
+  if (mode === 'recent') {
+    const recentItems = [...items]
+      .sort((a, b) => Number(b.date) - Number(a.date))
+      .slice(0, 3);
+    
+    const secondary = recentItems.length > 0
+      ? `Recent: ${recentItems[0].description.substring(0, 40)}${recentItems[0].description.length > 40 ? '...' : ''}`
+      : undefined;
+
+    return { stats, secondary, isEmpty, income, expenses, net, recentItems };
   }
+
+  return { stats, isEmpty, income, expenses, net };
 }

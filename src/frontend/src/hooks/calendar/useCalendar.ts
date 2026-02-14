@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from '../useActor';
 import { useInternetIdentity } from '../useInternetIdentity';
-import type { CalendarEntry } from '@/backend';
+import type { CalendarEntry, Recurrence } from '@/backend';
 
 export function useGetCalendarEntries() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -28,17 +28,29 @@ export function useCreateCalendarEntry() {
       description,
       startTime,
       endTime,
+      recurrence,
+      taskId,
     }: {
       title: string;
       description: string;
       startTime: bigint;
       endTime: bigint | null;
+      recurrence?: Recurrence | null;
+      taskId?: bigint | null;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.createCalendarEntry(title, description, startTime, endTime);
+      return actor.createCalendarEntry(
+        title,
+        description,
+        startTime,
+        endTime,
+        recurrence || null,
+        taskId || null
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendarEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }
@@ -54,18 +66,31 @@ export function useUpdateCalendarEntry() {
       description,
       startTime,
       endTime,
+      recurrence,
+      taskId,
     }: {
       id: bigint;
       title: string;
       description: string;
       startTime: bigint;
       endTime: bigint | null;
+      recurrence?: Recurrence | null;
+      taskId?: bigint | null;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.updateCalendarEntry(id, title, description, startTime, endTime);
+      return actor.updateCalendarEntry(
+        id,
+        title,
+        description,
+        startTime,
+        endTime,
+        recurrence || null,
+        taskId || null
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendarEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }
@@ -81,6 +106,7 @@ export function useDeleteCalendarEntry() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendarEntries'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
   });
 }

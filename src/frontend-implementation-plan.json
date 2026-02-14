@@ -1,282 +1,204 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Everything Tracker mobile theme refresh, security status bar, examples, Crypto section, and loading regression fix (frontend-only)",
+  "title": "Tasks↔Calendar sync, recurring calendar entries, dashboard market summary, hero header, and crypto P/L UI",
   "requirements": [
     {
-      "id": "REQ-12",
-      "summary": "Fix the frontend regression causing a blank screen/crash so the app renders the initial route and existing navigation works reliably without infinite loading during auth/profile initialization.",
+      "id": "REQ-27",
+      "summary": "Bi-directional Tasks↔Calendar sync for dated items with consistent create/edit/delete behavior in the UI.",
       "acceptanceCriteria": [
-        "App loads to the Dashboard route without a blank screen or uncaught exception in the browser console",
-        "Unauthenticated users see the login screen; authenticated users can navigate to Dashboard/Tasks/Goals/Calendar/Budget",
-        "No infinite loading state occurs during Internet Identity initialization or profile fetching"
+        "Creating a Task with a due date results in a corresponding Calendar item showing on the correct day in Year/Month/Week calendar views and in the Calendar list.",
+        "Creating a Calendar item designated as a Task results in a corresponding Task item appearing in the Tasks page with the correct due date.",
+        "Editing a synced Task’s description and/or due date updates the linked Calendar item’s title/date accordingly.",
+        "Editing a synced Calendar task’s title/date updates the linked Task’s description/due date accordingly.",
+        "Deleting a synced Task removes (or clearly unlinks) its linked Calendar item; deleting a synced Calendar task removes (or clearly unlinks) its linked Task, with no orphaned linked references remaining.",
+        "Sync behavior is per-user and respects existing access control rules (a user never sees another user’s synced items)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/hooks/calendar/useCalendar.ts",
           "operation": "modify",
-          "description": "Add router-level error handling (e.g., an error component/fallback view) so runtime errors don't result in a blank screen, and ensure all existing routes render through the authenticated shell without crashes."
+          "description": "Update calendar mutations to pass/receive task linkage fields required for Tasks↔Calendar sync (ensure create/update support recurrence and optional taskId)."
         },
         {
-          "path": "frontend/src/components/auth/RequireAuth.tsx",
+          "path": "frontend/src/hooks/tasks/useTasks.ts",
           "operation": "modify",
-          "description": "Harden initialization/loading behavior to avoid infinite spinners (e.g., add a user-visible fallback state and safe retry guidance when Internet Identity or profile fetching hangs) while keeping unauthenticated users on the login screen. Verify the component's usage instructions before implementing."
+          "description": "Invalidate calendar queries when task mutations succeed (create/update/delete) to keep synced views consistent in the UI."
         },
         {
-          "path": "frontend/src/components/layout/AppShell.tsx",
-          "operation": "modify",
-          "description": "Remove/guard any unsafe direct browser-global usage during render (e.g., protect window access) and ensure shell layout consistently renders the routed content and navigation without runtime exceptions. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-13",
-      "summary": "Add a persistent, video game themed “privacy confirmed” live status indicator bar that is purple when authenticated and flashing red when not authenticated.",
-      "acceptanceCriteria": [
-        "A status bar is visible in the app shell on all routes (including the login screen)",
-        "When the user is authenticated (Internet Identity identity present), the bar displays a purple \"secure\" state with clear English text (e.g., \"Secure session\" / \"Privacy confirmed\")",
-        "When the user is not authenticated, the bar displays a red state and uses a flashing/pulsing animation to indicate \"not secure\"",
-        "The bar styling reads as \"video game themed\" (e.g., scanlines/glow/pixel-like accents) while remaining legible and accessible"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/common/PrivacyStatusBar.tsx",
+          "path": "frontend/src/hooks/sync/useTaskCalendarSync.ts",
           "operation": "create",
-          "description": "Create a persistent status bar component that reads auth state from Internet Identity and renders purple “Privacy confirmed / Secure session” when authenticated and a flashing red “Not secure” state when not authenticated. Use shadcn-ui primitives (e.g., Card/Badge) where helpful for consistent styling. Verify the component's usage instructions before implementing."
+          "description": "Add a dedicated sync hook that orchestrates cross-feature mutations (create task+linked calendar entry, update both sides, delete/unlink both sides) using existing react-query hooks/actor calls. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/layout/AppShell.tsx",
+          "path": "frontend/src/components/tasks/TaskFormDialog.tsx",
           "operation": "modify",
-          "description": "Wire PrivacyStatusBar into the app shell so it appears on all routes, including the login screen, and stays pinned/visible in a mobile-first layout. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Add global styles/utility classes for the status bar’s “video game themed” look (scanline/glow accents) and a pulsing/flashing animation for the insecure state, keeping text legible and accessible."
-        },
-        {
-          "path": "frontend/tailwind.config.js",
-          "operation": "modify",
-          "description": "Extend Tailwind theme with any required keyframes/animations (e.g., pulse/scanline) and token colors for the status bar secure/insecure states."
-        }
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "summary": "Refresh the global UI to a mobile-first “everything tracker” theme with Apple Settings–style grouped panels and toggle-box controls applied consistently across sections.",
-      "acceptanceCriteria": [
-        "Layout and spacing are optimized for mobile first (comfortable touch targets, clear section headers, consistent card/panel spacing) while still looking good on desktop",
-        "Settings-like toggle UI is used where applicable (e.g., dashboard summary toggles) with an Apple Settings–inspired grouped-panel aesthetic",
-        "Theme changes are applied consistently across Dashboard, Tasks, Goals, Calendar, Budget pages (typography, card styles, borders, backgrounds, focus states)",
-        "User-facing text remains in English and is clear and friendly"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Adjust theme CSS variables and base styles for a friendly mobile-first tracker feel (panels/cards, spacing, focus rings) and add reusable “settings group” panel classes inspired by Apple Settings."
-        },
-        {
-          "path": "frontend/src/components/layout/AppShell.tsx",
-          "operation": "modify",
-          "description": "Refine the shell layout for mobile-first ergonomics (consistent padding, header density, navigation touch targets) while preserving existing routing and auth behavior. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/dashboard/DashboardSummaryToggles.tsx",
-          "operation": "modify",
-          "description": "Restyle the summary settings panel to look like Apple Settings grouped toggle boxes using shadcn-ui components (Card, Switch, Select) and new “settings group” classes. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/DashboardPage.tsx",
-          "operation": "modify",
-          "description": "Update Dashboard page typography, spacing, and cards to match the new mobile-first tracker theme while keeping all content in English and maintaining existing quick access navigation."
-        },
-        {
-          "path": "frontend/src/pages/TasksPage.tsx",
-          "operation": "modify",
-          "description": "Apply consistent mobile-first spacing and panel styling on Tasks, ensuring existing interactions remain unchanged. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/GoalsPage.tsx",
-          "operation": "modify",
-          "description": "Apply consistent mobile-first spacing and panel styling on Goals, ensuring existing interactions remain unchanged. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/CalendarPage.tsx",
-          "operation": "modify",
-          "description": "Apply consistent mobile-first spacing and panel styling on Calendar, ensuring existing interactions remain unchanged. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/BudgetPage.tsx",
-          "operation": "modify",
-          "description": "Apply consistent mobile-first spacing and panel styling on Budget (table/card surfaces), ensuring existing interactions remain unchanged. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-15",
-      "summary": "Add clear, friendly security/encryption visibility copy near primary data-entry areas in each organizer section without unverifiable claims.",
-      "acceptanceCriteria": [
-        "Each organizer section (Tasks, Goals, Calendar, Budget, and the new Crypto section) includes a short, friendly security note in English near the primary entry list/form area",
-        "Copy is non-misleading and avoids unverifiable claims; it communicates that the app protects user entries and that secure login is required",
-        "Security messaging does not block normal usage and remains visually secondary to primary actions"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/common/SecurityNote.tsx",
-          "operation": "create",
-          "description": "Create a small, visually-secondary note component with friendly English copy indicating entries are protected with encryption/integrity safeguards and that secure login is required (no third-party/certification claims). Use shadcn-ui typography primitives or Card/Alert styling if appropriate. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/TasksPage.tsx",
-          "operation": "modify",
-          "description": "Place SecurityNote near the primary task list/add area so it’s visible during data entry without blocking usage. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/GoalsPage.tsx",
-          "operation": "modify",
-          "description": "Place SecurityNote near the primary goals list/add area so it’s visible during data entry without blocking usage. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/CalendarPage.tsx",
-          "operation": "modify",
-          "description": "Place SecurityNote near the primary calendar list/add area so it’s visible during data entry without blocking usage. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/BudgetPage.tsx",
-          "operation": "modify",
-          "description": "Place SecurityNote near the primary budget list/add area so it’s visible during data entry without blocking usage. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/CryptoPage.tsx",
-          "operation": "create",
-          "description": "Add SecurityNote near the primary crypto positions list/form area on the new Crypto page. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-16",
-      "summary": "Add 2–3 in-app example entries/templates per section (Tasks, Goals, Calendar, Budget, Crypto) shown in empty states and/or as quick-add suggestions.",
-      "acceptanceCriteria": [
-        "When a section has zero items, the empty state includes 2–3 example suggestions written in English and tailored to that section",
-        "Examples are clearly labeled as examples/templates and are not confused with user data",
-        "Optionally (if implemented), the user can click an example to prefill the add dialog; otherwise examples are purely informational",
-        "Examples exist for Tasks, Goals, Calendar, Budget, and Crypto"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/common/SectionExamples.tsx",
-          "operation": "create",
-          "description": "Create a reusable examples/templates block that accepts a section label and renders 2–3 tailored English example items, clearly labeled as “Examples” or “Templates”, styled as secondary guidance. Use shadcn-ui components (Card, Badge, Button) if needed. Verify the component's usage instructions before implementing."
+          "description": "When a task has a due date, invoke the sync hook so creating/updating a task also creates/updates the linked calendar item (and removing a due date unlinks/stops syncing as designed). Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/components/tasks/TaskList.tsx",
           "operation": "modify",
-          "description": "Enhance the zero-items empty state to include the Tasks examples/templates block (sports/private themed copy) while keeping examples clearly distinct from user data. Verify the component's usage instructions before implementing."
+          "description": "Route task edit/delete actions through the sync hook so deleting a synced task removes/unlinks its calendar counterpart (no orphaned linked references in UI). Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/goals/GoalList.tsx",
+          "path": "frontend/src/pages/TasksPage.tsx",
           "operation": "modify",
-          "description": "Enhance the zero-items empty state to include Goals examples/templates guidance. Verify the component's usage instructions before implementing."
+          "description": "Wire the sync behavior into the Tasks page flow (ensure the page uses the synced delete/edit handlers so Tasks and Calendar remain consistent)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-28",
+      "summary": "Add recurring calendar entries (weekly/monthly/yearly) in create/edit flow and reflect occurrences in calendar views and list.",
+      "acceptanceCriteria": [
+        "Calendar entry create/edit UI includes a recurrence control with options: None, Weekly, Monthly, Yearly.",
+        "Recurring selection is saved with the calendar entry and persists across reloads.",
+        "Calendar views (year/month/week) visibly mark days that have at least one occurrence generated by a recurring entry.",
+        "Calendar list view clearly indicates that an entry is recurring and its recurrence frequency.",
+        "If recurrence is removed on an existing entry, future occurrences stop appearing while the base entry remains as a single scheduled item on its start date."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/calendar/CalendarEntryFormDialog.tsx",
+          "operation": "modify",
+          "description": "Add a recurrence control (None/Weekly/Monthly/Yearly) to the calendar entry create/edit dialog and submit the selected recurrence via calendar mutations. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/calendar/useCalendar.ts",
+          "operation": "modify",
+          "description": "Ensure create/update calendar mutations accept and forward the recurrence value, and preserve it when editing existing entries."
+        },
+        {
+          "path": "frontend/src/utils/calendar/recurrence.ts",
+          "operation": "create",
+          "description": "Add a small recurrence utility to compute occurrence day-keys for weekly/monthly/yearly entries over a provided date range (used by year/month/week views and list indicators)."
+        },
+        {
+          "path": "frontend/src/utils/calendar/entryIndicators.ts",
+          "operation": "modify",
+          "description": "Extend scheduled-day computation to include occurrences generated from recurring entries (using the new recurrence utility) so Year/Month/Week views can mark days with occurrences."
         },
         {
           "path": "frontend/src/components/calendar/CalendarEntryList.tsx",
           "operation": "modify",
-          "description": "Enhance the zero-items empty state to include Calendar examples/templates guidance. Verify the component's usage instructions before implementing."
+          "description": "Show a clear recurring indicator (e.g., badge/text) for entries with recurrence and display the selected frequency in the list. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/BudgetPage.tsx",
+          "path": "frontend/src/pages/CalendarPage.tsx",
           "operation": "modify",
-          "description": "Enhance the Budget empty state (when no transactions) to include Budget examples/templates guidance, clearly labeled as examples. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/crypto/CryptoEntryList.tsx",
-          "operation": "create",
-          "description": "Create a crypto positions list component that includes an empty state with 2–3 Crypto examples/templates guidance (e.g., common assets/notes) clearly labeled as examples. Use shadcn-ui table/cards as appropriate. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/CryptoPage.tsx",
-          "operation": "create",
-          "description": "Wire the crypto empty state examples/templates via the crypto list component when the user has zero crypto entries. Verify the component's usage instructions before implementing."
+          "description": "Ensure calendar views receive occurrence-aware scheduled day indicators so recurring items mark the correct days in year/month/week modes."
         }
       ]
     },
     {
-      "id": "REQ-17",
-      "summary": "Add a new authenticated Crypto section with navigation, a dedicated page, and per-user CRUD tracking using existing backend capabilities; style the UI with a Coinbase-like visual feel (style only).",
+      "id": "REQ-29",
+      "summary": "Add a dashboard “market summary” section showing top 10 Crypto, Stocks, and Commodities with client-side fetch + loading/error states.",
       "acceptanceCriteria": [
-        "A new nav item and route (e.g., /crypto) is available for authenticated users and visible in the app shell navigation",
-        "Crypto page supports creating, listing, editing, and deleting crypto entries scoped to the signed-in user",
-        "Crypto page includes a simple summary area (e.g., total positions count and/or grouped by asset) computed client-side",
-        "Crypto UI uses a Coinbase-like visual feel (clean finance-app surfaces, restrained palette, clear typography) while staying consistent with the app’s overall design system",
-        "No Coinbase APIs or third-party crypto price feeds are used"
+        "Dashboard shows a clearly labeled market summary section with three lists/tables: Crypto (10), Stocks (10), Commodities (10).",
+        "Each row shows at minimum: symbol/name and current price (USD).",
+        "Data is fetched client-side with loading and error states; if a category cannot be fetched, the UI shows a clear fallback message while the rest of the dashboard still renders.",
+        "The market summary does not require user authentication to render the layout, but only fetches data when appropriate for the app’s existing behavior (no infinite retries or blocking the page)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/crypto/useCrypto.ts",
+          "path": "frontend/src/hooks/market/useMarketSummary.ts",
           "operation": "create",
-          "description": "Add React Query hooks to fetch and mutate crypto entries via the existing backend interface (list/create/update/delete) scoped to the authenticated principal; mirror existing section hook patterns for consistency."
+          "description": "Create a client-side hook that fetches top-10 lists for Crypto/Stocks/Commodities with explicit loading/error states and no infinite retries (use react-query with sensible staleTime/retry settings)."
         },
         {
-          "path": "frontend/src/components/crypto/CryptoEntryFormDialog.tsx",
+          "path": "frontend/src/components/dashboard/MarketSummarySection.tsx",
           "operation": "create",
-          "description": "Create a dialog form component for creating/editing crypto entries (symbol, amount, purchase price, current price) using shadcn-ui Dialog/Input/Select/Button patterns consistent with other sections. Verify the component's usage instructions before implementing."
+          "description": "Create a dashboard section component that renders three labeled tables/lists (Crypto/Stocks/Commodities), each with symbol/name + USD price, plus per-category loading/error/fallback messaging. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/crypto/CryptoEntryList.tsx",
-          "operation": "create",
-          "description": "Create a crypto entry list with edit/delete actions and loading/empty states, using shadcn-ui Card/Table/Button patterns for a clean Coinbase-like surface feel. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/crypto/CryptoSummary.tsx",
-          "operation": "create",
-          "description": "Create a simple client-side computed summary (e.g., total positions count and grouped counts by symbol) displayed in clean finance-style cards consistent with the app theme. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/CryptoPage.tsx",
-          "operation": "create",
-          "description": "Create the authenticated Crypto page that composes CryptoSummary, CryptoEntryList, and CryptoEntryFormDialog; apply Coinbase-like visual styling (restrained palette, clean typography) without any external API integrations. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/pages/DashboardPage.tsx",
           "operation": "modify",
-          "description": "Register the new /crypto route in the router and ensure it is protected via the existing RequireAuth flow (no new auth system)."
+          "description": "Wire the MarketSummarySection into the Dashboard page so it renders as an additional section without changing unrelated existing dashboard summaries. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-30",
+      "summary": "Modernize the global header with large branded title “The Everything Tracker” and a static hero background image with accessible contrast.",
+      "acceptanceCriteria": [
+        "The global header (AppShell) includes a prominent “The Everything Tracker” title in a modern style.",
+        "A static background hero image is visible behind/within the header area without reducing readability of navigation and auth controls.",
+        "Header remains responsive: mobile shows a clean layout with the existing hamburger/sheet behavior; desktop shows navigation links as before.",
+        "Text contrast and accessibility remain acceptable (no unreadable nav text over the hero image)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/assets/generated/header-city-desk-hero.dim_1920x640.png",
+          "operation": "create",
+          "description": "Add the required generated hero image asset at frontend/public/assets/generated/header-city-desk-hero.dim_1920x640.png (served statically; do not route through backend)."
         },
         {
           "path": "frontend/src/components/layout/AppShell.tsx",
           "operation": "modify",
-          "description": "Add a Crypto nav link visible to authenticated users in both desktop and mobile navigation. Verify the component's usage instructions before implementing."
+          "description": "Update the header to a hero-style layout: prominent “The Everything Tracker” title, background using frontend/public/assets/generated/header-city-desk-hero.dim_1920x640.png, and maintain existing desktop nav + mobile Sheet behavior with readable contrast. Verify the component's usage instructions before implementing."
         },
         {
           "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Add per-section styling utilities for the Crypto page to achieve a Coinbase-like look (clean finance surfaces, subtle borders, restrained accent colors) while staying consistent with the global design system."
+          "description": "Add/adjust global Tailwind component classes used by the hero header (overlay/contrast, responsive spacing) to keep navigation/auth controls accessible over the background image."
         }
       ]
     },
     {
-      "id": "REQ-18",
-      "summary": "Apply distinct per-section theming for Tasks to evoke a sports + paper scroll + private feel without impacting other sections or breaking interactions.",
+      "id": "REQ-31",
+      "summary": "Enhance Crypto page with total portfolio profit/loss and per-asset profit status listing using live prices (or stored currentPriceCents fallback).",
       "acceptanceCriteria": [
-        "Tasks page (and key task components) has distinct visual styling evoking a sports + paper-scroll + private feel (e.g., textured background effect via CSS, badge styling, header treatment)",
-        "Theming remains accessible (sufficient contrast, readable fonts) and does not break existing interactions (add/edit/complete/delete)",
-        "Other sections retain their own appropriate styling and do not inherit the Tasks-specific look unintentionally"
+        "Crypto page shows a total profit/loss value (USD) for the portfolio based on (currentPrice - purchasePrice) * amount, using the same unit scaling already used for portfolio value.",
+        "Crypto summary area no longer presents “Unique Assets” as a primary stat; instead, a “Profit Status” section/list is shown summarizing each asset’s profit/loss (positive/negative/flat) and its P/L amount (USD) or percent (at least USD).",
+        "Per-asset profit/loss is computed using live prices from the existing live price hook when available, otherwise falling back to the stored currentPriceCents.",
+        "The per-asset profit/loss status is clearly visually differentiated (e.g., positive vs negative styling) and remains readable in the existing crypto theme."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/utils/crypto/profitLoss.ts",
+          "operation": "create",
+          "description": "Add shared helpers to compute per-entry and per-asset profit/loss in USD using amount unit scaling consistent with existing portfolio value computation and using live price when available."
+        },
+        {
+          "path": "frontend/src/components/crypto/CryptoSummary.tsx",
+          "operation": "modify",
+          "description": "Replace “Unique Assets” stat with (1) total portfolio profit/loss (USD) and (2) a “Profit Status” per-asset listing using live prices when available, otherwise stored currentPriceCents; apply clear positive/negative/flat styling. Verify the component's usage instructions before implementing."
+        },
+        {
           "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Add scoped CSS classes for the Tasks section theme (paper-scroll texture effect, sports/private accents) ensuring styles only apply within a Tasks-specific wrapper class and meet accessibility contrast requirements."
+          "description": "Add minimal crypto-theme utility classes for positive/negative/flat P/L styling that remain readable in the existing crypto theme (no changes to shadcn ui primitives)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-32",
+      "summary": "Update Calendar create/edit UI to choose entry type (Task vs Event) so calendar-created tasks participate in Tasks↔Calendar sync while events remain calendar-only.",
+      "acceptanceCriteria": [
+        "Calendar entry form includes a clear control to select entry type: Event or Task.",
+        "When entry type is Task, the form creates/updates a synced Task as described in REQ-27; when entry type is Event, it creates/updates only a calendar item (no Task created).",
+        "Editing an existing calendar entry preserves and displays its type (Task vs Event)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/calendar/CalendarEntryFormDialog.tsx",
+          "operation": "modify",
+          "description": "Add an entry type control (Event vs Task) to the calendar entry dialog; when Task is selected (or editing an entry that is already linked), route submit through the sync hook; when Event is selected, keep calendar-only behavior. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/pages/TasksPage.tsx",
+          "path": "frontend/src/components/calendar/CalendarEntryList.tsx",
           "operation": "modify",
-          "description": "Wrap Tasks content in a Tasks-theme container class and adjust header/panel styling to match the sports + paper scroll + private vibe while preserving existing CRUD interactions. Verify the component's usage instructions before implementing."
+          "description": "Visually distinguish Task-type calendar entries vs Events in the list (e.g., label/badge) and ensure edit opens with the correct preserved type. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/tasks/TaskList.tsx",
+          "path": "frontend/src/pages/CalendarPage.tsx",
           "operation": "modify",
-          "description": "Adjust task card visuals (within the scoped Tasks theme) to match the section styling without altering behavior (toggle/edit/delete). Use shadcn-ui Card/Button/Checkbox as-is (compose only). Verify the component's usage instructions before implementing."
+          "description": "Update Calendar page button copy and wiring so the create flow supports both Events and Tasks without adding new routes/pages, while keeping existing view selector behavior intact."
+        },
+        {
+          "path": "frontend/src/hooks/sync/useTaskCalendarSync.ts",
+          "operation": "modify",
+          "description": "Extend the sync hook to support calendar-created tasks: create/update/delete/unlink rules for entries marked as Task vs Event, preserving type on edit and keeping queries consistent."
         }
       ]
     }

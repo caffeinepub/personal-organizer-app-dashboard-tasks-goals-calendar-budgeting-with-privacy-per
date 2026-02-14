@@ -1,155 +1,143 @@
 {
   "kind": "build_request",
-  "title": "Mobile “Everything Tracker” theme refresh + security live status bar + section examples + new Crypto section + fix app loading regression",
-  "priority": "high",
+  "title": "Bi-directional Tasks↔Calendar sync, recurring calendar entries, market summary dashboard, modern header with hero image, and crypto profit/loss UI",
+  "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-12",
-      "text": "Fix the regression where the app is \"no longer loading\" by identifying and resolving the runtime/build error(s) so the initial route renders successfully and navigation to existing sections (Dashboard, Tasks, Goals, Calendar, Budget) works without a blank screen or crash.",
+      "id": "REQ-27",
+      "text": "Implement bi-directional syncing between Tasks and Calendar for dated items so that (a) any Task with a due date appears in the Calendar, and (b) Calendar items created as dated tasks appear in the Tasks list, with updates/deletes kept consistent across both.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-8"
+          "msg-4"
         ],
         "quotes": [
-          "add these to the app that is not longer loading"
+          "can you make the tasks entries and calanader entries synced up so the appear in both if dated entries.",
+          "...all tasks pull from calander, and sync with calander if user enters tasks or events on the calander."
         ]
       },
       "acceptanceCriteria": [
-        "App loads to the Dashboard route without a blank screen or uncaught exception in the browser console",
-        "Unauthenticated users see the login screen; authenticated users can navigate to Dashboard/Tasks/Goals/Calendar/Budget",
-        "No infinite loading state occurs during Internet Identity initialization or profile fetching"
+        "Creating a Task with a due date results in a corresponding Calendar item showing on the correct day in Year/Month/Week calendar views and in the Calendar list.",
+        "Creating a Calendar item designated as a Task results in a corresponding Task item appearing in the Tasks page with the correct due date.",
+        "Editing a synced Task’s description and/or due date updates the linked Calendar item’s title/date accordingly.",
+        "Editing a synced Calendar task’s title/date updates the linked Task’s description/due date accordingly.",
+        "Deleting a synced Task removes (or clearly unlinks) its linked Calendar item; deleting a synced Calendar task removes (or clearly unlinks) its linked Task, with no orphaned linked references remaining.",
+        "Sync behavior is per-user and respects existing access control rules (a user never sees another user’s synced items)."
       ]
     },
     {
-      "id": "REQ-13",
-      "text": "Add a persistent \"privacy confirmed\" live status indicator bar with a video game themed look that is purple when the user is securely logged in, and flashes/turns red when the session is not secure (e.g., user is not authenticated).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4",
-          "msg-8"
-        ],
-        "quotes": [
-          "include a purple colored privacy confirmed live status indicator bar (that looks video game themed), which flashes and turns red if not secured session but is purple once logged into the applciation securely"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A status bar is visible in the app shell on all routes (including the login screen)",
-        "When the user is authenticated (Internet Identity identity present), the bar displays a purple \"secure\" state with clear English text (e.g., \"Secure session\" / \"Privacy confirmed\")",
-        "When the user is not authenticated, the bar displays a red state and uses a flashing/pulsing animation to indicate \"not secure\"",
-        "The bar styling reads as \"video game themed\" (e.g., scanlines/glow/pixel-like accents) while remaining legible and accessible"
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "text": "Redesign the global UI theme to a mobile-first “everything tracker” experience that feels fun, helpful, and easy to use, with Apple Settings–style toggle boxes/panels for preferences and settings-like controls across the app.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-8"
-        ],
-        "quotes": [
-          "I want to change the them of the application/website to be a mobile everythng tracker, With a fun and helpful easy to user user interface.",
-          "I want a more friendly theme with toggle boxes and themes similiar to the apple setting menu interface."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Layout and spacing are optimized for mobile first (comfortable touch targets, clear section headers, consistent card/panel spacing) while still looking good on desktop",
-        "Settings-like toggle UI is used where applicable (e.g., dashboard summary toggles) with an Apple Settings–inspired grouped-panel aesthetic",
-        "Theme changes are applied consistently across Dashboard, Tasks, Goals, Calendar, Budget pages (typography, card styles, borders, backgrounds, focus states)",
-        "User-facing text remains in English and is clear and friendly"
-      ]
-    },
-    {
-      "id": "REQ-15",
-      "text": "Make security/encryption visibility explicit in the UI by adding clear, friendly copy near data entry areas indicating that entries are protected with encryption/integrity safeguards, without claiming any third-party certification or external security service.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-8"
-        ],
-        "quotes": [
-          "I want users to be able to tell they are entering there data securily behind encryption"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Each organizer section (Tasks, Goals, Calendar, Budget, and the new Crypto section) includes a short, friendly security note in English near the primary entry list/form area",
-        "Copy is non-misleading and avoids unverifiable claims; it communicates that the app protects user entries and that secure login is required",
-        "Security messaging does not block normal usage and remains visually secondary to primary actions"
-      ]
-    },
-    {
-      "id": "REQ-16",
-      "text": "Provide 2–3 in-app example entries/templates in each organizer section (Tasks, Goals, Calendar, Budget, and Crypto) to guide users on what information best pertains to each area, shown as examples when the user has no items yet and/or as quick-add suggestions.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-8"
-        ],
-        "quotes": [
-          "I want the user to be provided 2-3 examples in each section for what information would best pertan to each area of the organizer."
-        ]
-      },
-      "acceptanceCriteria": [
-        "When a section has zero items, the empty state includes 2–3 example suggestions written in English and tailored to that section",
-        "Examples are clearly labeled as examples/templates and are not confused with user data",
-        "Optionally (if implemented), the user can click an example to prefill the add dialog; otherwise examples are purely informational",
-        "Examples exist for Tasks, Goals, Calendar, Budget, and Crypto"
-      ]
-    },
-    {
-      "id": "REQ-17",
-      "text": "Add a new \"Crypto\" section to the app, including navigation access, a dedicated page, and basic per-user CRUD tracking for crypto entries, with a UI theme resembling Coinbase (visual style only; no external API integration).",
+      "id": "REQ-28",
+      "text": "Add support for recurring Calendar entries with user-selectable recurrence options: weekly, monthly, and yearly, exposed as a checkbox/toggle control in the Calendar entry create/edit flow.",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-8"
+          "msg-4"
         ],
         "quotes": [
-          "For the crypto section I want it to resemble coinbases application theme."
+          "Also allow for reoccuring check box for weekly/month/yearly entries in the calander area"
         ]
       },
       "acceptanceCriteria": [
-        "A new nav item and route (e.g., /crypto) is available for authenticated users and visible in the app shell navigation",
-        "Crypto page supports creating, listing, editing, and deleting crypto entries scoped to the signed-in user",
-        "Crypto page includes a simple summary area (e.g., total positions count and/or grouped by asset) computed client-side",
-        "Crypto UI uses a Coinbase-like visual feel (clean finance-app surfaces, restrained palette, clear typography) while staying consistent with the app’s overall design system",
-        "No Coinbase APIs or third-party crypto price feeds are used"
+        "Calendar entry create/edit UI includes a recurrence control with options: None, Weekly, Monthly, Yearly.",
+        "Recurring selection is saved with the calendar entry and persists across reloads.",
+        "Calendar views (year/month/week) visibly mark days that have at least one occurrence generated by a recurring entry.",
+        "Calendar list view clearly indicates that an entry is recurring and its recurrence frequency.",
+        "If recurrence is removed on an existing entry, future occurrences stop appearing while the base entry remains as a single scheduled item on its start date."
       ]
     },
     {
-      "id": "REQ-18",
-      "text": "Apply per-section theming so that the Tasks (to-do list) section resembles a sports-related / paper scroll / private theme, while still matching the app’s overall mobile-first tracker design and not harming readability.",
+      "id": "REQ-29",
+      "text": "Add a new Dashboard “market summary” section that shows the top 10 Crypto, Stocks, and Commodities prices, and display it on the dashboard page.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "msg-4"
         ],
         "quotes": [
-          "for the to do list I want it to resemble a sports related / paper scroll  / private theme."
+          "Also create a coinmakret summary on the dashboard showing top 10 crypto, stocks, and commoditys prices."
         ]
       },
       "acceptanceCriteria": [
-        "Tasks page (and key task components) has distinct visual styling evoking a sports + paper-scroll + private feel (e.g., textured background effect via CSS, badge styling, header treatment)",
-        "Theming remains accessible (sufficient contrast, readable fonts) and does not break existing interactions (add/edit/complete/delete)",
-        "Other sections retain their own appropriate styling and do not inherit the Tasks-specific look unintentionally"
+        "Dashboard shows a clearly labeled market summary section with three lists/tables: Crypto (10), Stocks (10), Commodities (10).",
+        "Each row shows at minimum: symbol/name and current price (USD).",
+        "Data is fetched client-side with loading and error states; if a category cannot be fetched, the UI shows a clear fallback message while the rest of the dashboard still renders.",
+        "The market summary does not require user authentication to render the layout, but only fetches data when appropriate for the app’s existing behavior (no infinite retries or blocking the page)."
+      ]
+    },
+    {
+      "id": "REQ-30",
+      "text": "Modernize the top menu/header UI to include a large branded title “The Everything Tracker” and a hero-style background image depicting a very organized city as seen from an organized desk space overlooking the city.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Make the top Menu bar more modern themed, with the title of the page, The Everything Tracker, Which is large and includes a picture of a very organized city in the background from a view of an orangzed desk space overlooking the city as a background image."
+        ]
+      },
+      "acceptanceCriteria": [
+        "The global header (AppShell) includes a prominent “The Everything Tracker” title in a modern style.",
+        "A static background hero image is visible behind/within the header area without reducing readability of navigation and auth controls.",
+        "Header remains responsive: mobile shows a clean layout with the existing hamburger/sheet behavior; desktop shows navigation links as before.",
+        "Text contrast and accessibility remain acceptable (no unreadable nav text over the hero image)."
+      ]
+    },
+    {
+      "id": "REQ-31",
+      "text": "Enhance the Crypto page to include: (1) a total portfolio profit/loss summary computed from the user’s entries using live/current price vs purchase price, and (2) a per-asset profit/loss status listing that replaces the current “Unique Assets” stat concept in the summary.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Also make the crypto page include a total position as profit summary, change unique assets to Profit status listing and include each coin's profit/loss status based on the users entry information against the on current price vs entry purchase price."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Crypto page shows a total profit/loss value (USD) for the portfolio based on (currentPrice - purchasePrice) * amount, using the same unit scaling already used for portfolio value.",
+        "Crypto summary area no longer presents “Unique Assets” as a primary stat; instead, a “Profit Status” section/list is shown summarizing each asset’s profit/loss (positive/negative/flat) and its P/L amount (USD) or percent (at least USD).",
+        "Per-asset profit/loss is computed using live prices from the existing live price hook when available, otherwise falling back to the stored currentPriceCents.",
+        "The per-asset profit/loss status is clearly visually differentiated (e.g., positive vs negative styling) and remains readable in the existing crypto theme."
+      ]
+    },
+    {
+      "id": "REQ-32",
+      "text": "Update the Calendar entry creation/editing UI to allow users to choose whether a new calendar entry is a Task or an Event, so that calendar-created tasks participate in Tasks↔Calendar sync while calendar-created events remain calendar-only.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "...sync with calander if user enters tasks or events on the calander."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Calendar entry form includes a clear control to select entry type: Event or Task.",
+        "When entry type is Task, the form creates/updates a synced Task as described in REQ-27; when entry type is Event, it creates/updates only a calendar item (no Task created).",
+        "Editing an existing calendar entry preserves and displays its type (Task vs Event)."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files in frontend immutablePaths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui (compose these components instead).",
-    "Backend must remain a single Motoko actor in backend/main.mo; add new data types and methods there if needed.",
-    "Do not add external databases, third-party auth providers, WebSockets, or external crypto/Coinbase API integrations.",
-    "Use English for all user-facing UI text."
+    "Backend must remain a single Motoko actor with all logic in backend/main.mo; only add backend/migration.mo changes if state/data shape changes require upgrade handling.",
+    "Do not edit frontend files under frontend/immutablePaths (notably: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, and frontend/src/components/ui/*). Compose existing UI components instead.",
+    "Use English for all user-facing UI copy.",
+    "Do not introduce third-party authentication providers; only Internet Identity is supported.",
+    "Do not route generated images through the backend; serve them as static assets from frontend/public/assets/generated."
   ],
   "nonGoals": [
-    "Implementing real-time price updates, portfolio performance charts using external market data, or syncing with Coinbase accounts",
-    "Adding push notifications, email/SMS messaging, or social login",
-    "Rebuilding existing Tasks/Goals/Calendar/Budget CRUD behavior beyond what is necessary for theme/examples/security-indicator integration"
+    "Implementing real-time syncing via WebSockets/push notifications.",
+    "Integrating paid/keys-required market data providers (no user-provided API keys were supplied).",
+    "Adding external databases or additional backend services beyond the single Motoko actor.",
+    "Changing unrelated existing dashboard summaries (Tasks/Goals/Calendar/Budget) beyond what is necessary to add the new market summary block."
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "Hero background image showing a very organized city viewed from an organized desk space overlooking the city (header-city-desk-hero.dim_1920x640.png)"
+    ],
     "edits": []
   },
   "userProfileUpdate": {

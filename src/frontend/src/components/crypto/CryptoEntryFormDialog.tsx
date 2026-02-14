@@ -10,9 +10,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useCreateCryptoEntry, useUpdateCryptoEntry } from '@/hooks/crypto/useCrypto';
+import { useCryptoLivePrice } from '@/hooks/crypto/useCryptoLivePrices';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle, TrendingUp } from 'lucide-react';
 import type { CryptoEntry } from '@/backend';
 
 interface CryptoEntryFormDialogProps {
@@ -30,35 +32,48 @@ export default function CryptoEntryFormDialog({
   const [amount, setAmount] = useState('');
   const [purchasePrice, setPurchasePrice] = useState('');
   const [currentPrice, setCurrentPrice] = useState('');
+  const [manualPriceMode, setManualPriceMode] = useState(false);
 
   const createEntry = useCreateCryptoEntry();
   const updateEntry = useUpdateCryptoEntry();
 
+  // Fetch live price for the entered symbol
+  const { data: livePrice, isLoading: priceLoading, error: priceError } = useCryptoLivePrice(symbol);
+
   useEffect(() => {
     if (editingEntry) {
       setSymbol(editingEntry.symbol);
-      setAmount(editingEntry.amount.toString());
+      // Fix: Divide by 1000000 to convert back to human units
+      setAmount((Number(editingEntry.amount) / 1000000).toString());
       setPurchasePrice((Number(editingEntry.purchasePriceCents) / 100).toString());
       setCurrentPrice((Number(editingEntry.currentPriceCents) / 100).toString());
+      setManualPriceMode(false);
     } else {
       setSymbol('');
       setAmount('');
       setPurchasePrice('');
       setCurrentPrice('');
+      setManualPriceMode(false);
     }
   }, [editingEntry, open]);
+
+  // Auto-populate current price when live price is fetched
+  useEffect(() => {
+    if (!editingEntry && livePrice && !manualPriceMode) {
+      setCurrentPrice(livePrice.toFixed(2));
+    }
+  }, [livePrice, editingEntry, manualPriceMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!symbol.trim() || !amount || !purchasePrice || !currentPrice) {
-      toast.error('Please fill in all fields');
+    if (!symbol.trim() || !amount || !purchasePrice) {
+      toast.error('Please fill in symbol, amount, and purchase price');
       return;
     }
 
     const amountNum = parseFloat(amount);
     const purchasePriceNum = parseFloat(purchasePrice);
-    const currentPriceNum = parseFloat(currentPrice);
 
     if (isNaN(amountNum) || amountNum <= 0) {
       toast.error('Amount must be a positive number');
@@ -70,26 +85,40 @@ export default function CryptoEntryFormDialog({
       return;
     }
 
-    if (isNaN(currentPriceNum) || currentPriceNum < 0) {
-      toast.error('Current price must be a valid number');
-      return;
+    // Use live price if available and not in manual mode, otherwise use manual input
+    let finalCurrentPrice: number;
+    if (!manualPriceMode && livePrice && !editingEntry) {
+      finalCurrentPrice = livePrice;
+    } else {
+      if (!currentPrice) {
+        toast.error('Please enter a current price or wait for live price to load');
+        return;
+      }
+      const currentPriceNum = parseFloat(currentPrice);
+      if (isNaN(currentPriceNum) || currentPriceNum < 0) {
+        toast.error('Current price must be a valid number');
+        return;
+      }
+      finalCurrentPrice = currentPriceNum;
     }
 
     try {
       if (editingEntry) {
         await updateEntry.mutateAsync({
           id: editingEntry.id,
+          // Fix: Multiply by 1000000 to store in micro-units
           amount: BigInt(Math.floor(amountNum * 1000000)),
           purchasePriceCents: BigInt(Math.floor(purchasePriceNum * 100)),
-          currentPriceCents: BigInt(Math.floor(currentPriceNum * 100)),
+          currentPriceCents: BigInt(Math.floor(finalCurrentPrice * 100)),
         });
         toast.success('Position updated successfully');
       } else {
         await createEntry.mutateAsync({
           symbol: symbol.trim(),
+          // Fix: Multiply by 1000000 to store in micro-units
           amount: BigInt(Math.floor(amountNum * 1000000)),
           purchasePriceCents: BigInt(Math.floor(purchasePriceNum * 100)),
-          currentPriceCents: BigInt(Math.floor(currentPriceNum * 100)),
+          currentPriceCents: BigInt(Math.floor(finalCurrentPrice * 100)),
         });
         toast.success('Position added successfully');
       }
@@ -100,6 +129,8 @@ export default function CryptoEntryFormDialog({
   };
 
   const isPending = createEntry.isPending || updateEntry.isPending;
+  const showPriceError = !editingEntry && priceError && !manualPriceMode && symbol.trim().length > 0;
+  const showLivePrice = !editingEntry && livePrice && !manualPriceMode;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -120,7 +151,10 @@ export default function CryptoEntryFormDialog({
                 id="symbol"
                 placeholder="BTC, ETH, ICP..."
                 value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
+                onChange={(e) => {
+                  setSymbol(e.target.value);
+                  setManualPriceMode(false);
+                }}
                 disabled={isPending || !!editingEntry}
               />
             </div>
@@ -130,7 +164,7 @@ export default function CryptoEntryFormDialog({
                 id="amount"
                 type="number"
                 step="0.000001"
-                placeholder="0.5"
+                placeholder="1.0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 disabled={isPending}
@@ -149,16 +183,48 @@ export default function CryptoEntryFormDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="currentPrice">Current Price (USD)</Label>
-              <Input
-                id="currentPrice"
-                type="number"
-                step="0.01"
-                placeholder="47500.00"
-                value={currentPrice}
-                onChange={(e) => setCurrentPrice(e.target.value)}
-                disabled={isPending}
-              />
+              <Label htmlFor="currentPrice">
+                Current Price (USD)
+                {!editingEntry && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {priceLoading && '(fetching...)'}
+                    {showLivePrice && '(live)'}
+                  </span>
+                )}
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  id="currentPrice"
+                  type="number"
+                  step="0.01"
+                  placeholder="47500.00"
+                  value={currentPrice}
+                  onChange={(e) => {
+                    setCurrentPrice(e.target.value);
+                    setManualPriceMode(true);
+                  }}
+                  disabled={isPending || (!editingEntry && priceLoading && !manualPriceMode)}
+                />
+                {showLivePrice && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    title="Live price"
+                  >
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                  </Button>
+                )}
+              </div>
+              {showPriceError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    Unable to fetch live price for {symbol.toUpperCase()}. Please enter the current price manually.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </div>
           <DialogFooter>

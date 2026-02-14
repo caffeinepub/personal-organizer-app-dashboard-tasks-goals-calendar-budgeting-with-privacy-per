@@ -25,6 +25,8 @@ export interface CalendarEntry {
   'title' : string,
   'endTime' : [] | [Time],
   'description' : string,
+  'recurrence' : [] | [Recurrence],
+  'taskId' : [] | [bigint],
 }
 export interface CryptoEntry {
   'id' : bigint,
@@ -35,6 +37,11 @@ export interface CryptoEntry {
   'purchasePriceCents' : bigint,
   'symbol' : string,
 }
+export type DayOfWeek = { 'tuesday' : null } |
+  { 'wednesday' : null } |
+  { 'thursday' : null } |
+  { 'friday' : null } |
+  { 'monday' : null };
 export interface Goal {
   'id' : bigint,
   'title' : string,
@@ -42,13 +49,21 @@ export interface Goal {
   'progress' : bigint,
   'targetDate' : [] | [Time],
 }
+export type Recurrence = { 'monthly' : null } |
+  { 'yearly' : null } |
+  { 'daily' : null } |
+  { 'weekly' : null };
 export interface Task {
   'id' : bigint,
   'createdAt' : Time,
   'completed' : boolean,
   'dueDate' : [] | [Time],
   'description' : string,
+  'taskType' : TaskType,
 }
+export type TaskType = { 'weekend' : null } |
+  { 'dayOfWeek' : DayOfWeek } |
+  { 'daily' : null };
 export type Time = bigint;
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
@@ -62,7 +77,7 @@ export interface _SERVICE {
     BudgetItem
   >,
   'createCalendarEntry' : ActorMethod<
-    [string, string, Time, [] | [Time]],
+    [string, string, Time, [] | [Time], [] | [Recurrence], [] | [bigint]],
     CalendarEntry
   >,
   'createCryptoEntry' : ActorMethod<
@@ -70,7 +85,11 @@ export interface _SERVICE {
     CryptoEntry
   >,
   'createGoal' : ActorMethod<[string, string, [] | [Time]], Goal>,
-  'createTask' : ActorMethod<[string, [] | [Time]], Task>,
+  'createRecurringEntry' : ActorMethod<
+    [string, string, Time, [] | [Time], Recurrence],
+    CalendarEntry
+  >,
+  'createTask' : ActorMethod<[string, [] | [Time], TaskType], Task>,
   'deleteBudgetItem' : ActorMethod<[bigint], undefined>,
   'deleteCalendarEntry' : ActorMethod<[bigint], undefined>,
   'deleteCryptoEntry' : ActorMethod<[bigint], undefined>,
@@ -82,6 +101,7 @@ export interface _SERVICE {
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getCryptoPortfolio' : ActorMethod<[Principal], Array<CryptoEntry>>,
   'getGoals' : ActorMethod<[Principal], Array<Goal>>,
+  'getRecurringEntries' : ActorMethod<[], Array<CalendarEntry>>,
   'getTasks' : ActorMethod<[Principal], Array<Task>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
@@ -92,7 +112,15 @@ export interface _SERVICE {
     [] | [BudgetItem]
   >,
   'updateCalendarEntry' : ActorMethod<
-    [bigint, string, string, Time, [] | [Time]],
+    [
+      bigint,
+      string,
+      string,
+      Time,
+      [] | [Time],
+      [] | [Recurrence],
+      [] | [bigint],
+    ],
     [] | [CalendarEntry]
   >,
   'updateCryptoEntry' : ActorMethod<
@@ -104,7 +132,14 @@ export interface _SERVICE {
     [] | [Goal]
   >,
   'updateGoalProgress' : ActorMethod<[bigint, bigint], [] | [Goal]>,
-  'updateTask' : ActorMethod<[bigint, string, [] | [Time]], [] | [Task]>,
+  'updateRecurringEntry' : ActorMethod<
+    [bigint, string, string, Time, [] | [Time], Recurrence],
+    [] | [CalendarEntry]
+  >,
+  'updateTask' : ActorMethod<
+    [bigint, string, [] | [Time], TaskType],
+    [] | [Task]
+  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

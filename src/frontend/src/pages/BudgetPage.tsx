@@ -15,6 +15,7 @@ import { useDeleteBudgetItem } from '@/hooks/budget/useBudget';
 import { toast } from 'sonner';
 import type { BudgetItem } from '@/backend';
 import SectionExamples from '@/components/common/SectionExamples';
+import { formatCentsAsCurrency } from '@/utils/money';
 
 export default function BudgetPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -47,13 +48,6 @@ export default function BudgetPage() {
 
   const formatDate = (timestamp: bigint) => {
     return new Date(Number(timestamp) / 1000000).toLocaleDateString();
-  };
-
-  const formatAmount = (amount: bigint) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(Number(amount));
   };
 
   const budgetExamples = [
@@ -122,7 +116,7 @@ export default function BudgetPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-medium text-sm">
-                        {formatAmount(item.amount)}
+                        {formatCentsAsCurrency(item.amount)}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">

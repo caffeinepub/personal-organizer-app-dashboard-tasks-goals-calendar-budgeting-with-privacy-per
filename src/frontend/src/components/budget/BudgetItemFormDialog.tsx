@@ -9,6 +9,7 @@ import { useCreateBudgetItem, useUpdateBudgetItem } from '@/hooks/budget/useBudg
 import { toast } from 'sonner';
 import type { BudgetItem } from '@/backend';
 import { BudgetItemType } from '@/backend';
+import { dollarsToCents, centsToDollars } from '@/utils/money';
 
 interface BudgetItemFormDialogProps {
   open: boolean;
@@ -30,7 +31,8 @@ export default function BudgetItemFormDialog({
 
   useEffect(() => {
     if (editingItem) {
-      setAmount(Number(editingItem.amount).toString());
+      // Convert stored cents to dollars for display
+      setAmount(centsToDollars(editingItem.amount));
       setDescription(editingItem.description);
       const itemDate = new Date(Number(editingItem.date) / 1000000);
       setDate(itemDate.toISOString().split('T')[0]);
@@ -59,10 +61,13 @@ export default function BudgetItemFormDialog({
     const dateTimestamp = BigInt(new Date(date).getTime() * 1000000);
 
     try {
+      // Convert dollars to cents for backend storage
+      const amountInCents = dollarsToCents(amountValue);
+      
       if (editingItem) {
         await updateItem.mutateAsync({
           id: editingItem.id,
-          amount: BigInt(Math.round(amountValue * 100)),
+          amount: BigInt(amountInCents),
           description: description.trim(),
           date: dateTimestamp,
           itemType: itemType as BudgetItemType,
@@ -70,7 +75,7 @@ export default function BudgetItemFormDialog({
         toast.success('Item updated successfully');
       } else {
         await createItem.mutateAsync({
-          amount: BigInt(Math.round(amountValue * 100)),
+          amount: BigInt(amountInCents),
           description: description.trim(),
           date: dateTimestamp,
           itemType: itemType as BudgetItemType,

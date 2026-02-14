@@ -14,14 +14,16 @@ export interface BudgetItem {
     itemType: BudgetItemType;
     amount: bigint;
 }
+export type Time = bigint;
 export interface CalendarEntry {
     id: bigint;
     startTime: Time;
     title: string;
     endTime?: Time;
     description: string;
+    recurrence?: Recurrence;
+    taskId?: bigint;
 }
-export type Time = bigint;
 export interface CryptoEntry {
     id: bigint;
     createdAt: Time;
@@ -37,7 +39,18 @@ export interface Task {
     completed: boolean;
     dueDate?: Time;
     description: string;
+    taskType: TaskType;
 }
+export type TaskType = {
+    __kind__: "weekend";
+    weekend: null;
+} | {
+    __kind__: "dayOfWeek";
+    dayOfWeek: DayOfWeek;
+} | {
+    __kind__: "daily";
+    daily: null;
+};
 export interface UserProfile {
     name: string;
 }
@@ -52,6 +65,19 @@ export enum BudgetItemType {
     expense = "expense",
     income = "income"
 }
+export enum DayOfWeek {
+    tuesday = "tuesday",
+    wednesday = "wednesday",
+    thursday = "thursday",
+    friday = "friday",
+    monday = "monday"
+}
+export enum Recurrence {
+    monthly = "monthly",
+    yearly = "yearly",
+    daily = "daily",
+    weekly = "weekly"
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -60,10 +86,11 @@ export enum UserRole {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createBudgetItem(amount: bigint, description: string, date: Time, itemType: BudgetItemType): Promise<BudgetItem>;
-    createCalendarEntry(title: string, description: string, startTime: Time, endTime: Time | null): Promise<CalendarEntry>;
+    createCalendarEntry(title: string, description: string, startTime: Time, endTime: Time | null, recurrence: Recurrence | null, taskId: bigint | null): Promise<CalendarEntry>;
     createCryptoEntry(symbol: string, amount: bigint, purchasePriceCents: bigint, currentPriceCents: bigint): Promise<CryptoEntry>;
     createGoal(title: string, description: string, targetDate: Time | null): Promise<Goal>;
-    createTask(description: string, dueDate: Time | null): Promise<Task>;
+    createRecurringEntry(title: string, description: string, startTime: Time, endTime: Time | null, recurrence: Recurrence): Promise<CalendarEntry>;
+    createTask(description: string, dueDate: Time | null, taskType: TaskType): Promise<Task>;
     deleteBudgetItem(itemId: bigint): Promise<void>;
     deleteCalendarEntry(entryId: bigint): Promise<void>;
     deleteCryptoEntry(entryId: bigint): Promise<void>;
@@ -75,15 +102,17 @@ export interface backendInterface {
     getCallerUserRole(): Promise<UserRole>;
     getCryptoPortfolio(user: Principal): Promise<Array<CryptoEntry>>;
     getGoals(user: Principal): Promise<Array<Goal>>;
+    getRecurringEntries(): Promise<Array<CalendarEntry>>;
     getTasks(user: Principal): Promise<Array<Task>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     toggleTaskCompletion(taskId: bigint): Promise<Task | null>;
     updateBudgetItem(itemId: bigint, amount: bigint, description: string, date: Time, itemType: BudgetItemType): Promise<BudgetItem | null>;
-    updateCalendarEntry(entryId: bigint, title: string, description: string, startTime: Time, endTime: Time | null): Promise<CalendarEntry | null>;
+    updateCalendarEntry(entryId: bigint, title: string, description: string, startTime: Time, endTime: Time | null, recurrence: Recurrence | null, taskId: bigint | null): Promise<CalendarEntry | null>;
     updateCryptoEntry(entryId: bigint, amount: bigint, purchasePriceCents: bigint, currentPriceCents: bigint): Promise<CryptoEntry | null>;
     updateGoal(goalId: bigint, title: string, description: string, targetDate: Time | null): Promise<Goal | null>;
     updateGoalProgress(goalId: bigint, progress: bigint): Promise<Goal | null>;
-    updateTask(taskId: bigint, description: string, dueDate: Time | null): Promise<Task | null>;
+    updateRecurringEntry(entryId: bigint, title: string, description: string, startTime: Time, endTime: Time | null, recurrence: Recurrence): Promise<CalendarEntry | null>;
+    updateTask(taskId: bigint, description: string, dueDate: Time | null, taskType: TaskType): Promise<Task | null>;
 }

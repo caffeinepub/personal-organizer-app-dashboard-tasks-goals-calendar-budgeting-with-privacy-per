@@ -1,17 +1,23 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 7,
-  "summary": "Shift toward a “mobile everything tracker” personal organizer with a more friendly, app-like UI (Apple Settings-style toggles), explicit in-app security/privacy visibility, and additional tracking areas (e.g., Crypto) with per-section theming.",
+  "projectStateVersion": 13,
+  "summary": "Expand the “everything tracker” to include bi-directional Tasks↔Calendar syncing for dated items, recurring Calendar entries (weekly/monthly/yearly), a modernized top menu bar branded as “The Everything Tracker” with a city/desk background image, an enhanced Crypto page with profit/loss summaries, and a new Dashboard market summary showing top prices across crypto, stocks, and commodities—alongside existing Budget/Calendar/Tasks improvements and Crypto price-pull work.",
   "architectural_notes": [
     "Privacy/security requirement: safeguard all user entry information using SHA-256 per app silo to prevent information collection on the individual.",
     "Add UI-level session security state detection to drive a persistent privacy indicator (secure vs insecure session) without exposing sensitive data.",
     "Adopt a mobile-first design system with Settings-style toggle components and allow per-section theming (e.g., Crypto/To-Do).",
-    "Add seeded/example content per section (2–3 examples) that is clearly marked as sample data and does not compromise privacy."
+    "Add seeded/example content per section (2–3 examples) that is clearly marked as sample data and does not compromise privacy.",
+    "Crypto section scope change: allow external API integration for fetching current prices (replace prior no-external-API stance), with attention to privacy and minimal data sharing.",
+    "Scope expansion: support external price/quote integrations not only for crypto but also for stocks and commodities to power the dashboard market summary and P/L calculations, with privacy-first/minimal data sharing."
   ],
   "known_issues": [
-    "App reported as “no longer loading” (needs investigation/regression fix)."
+    "App reported as “no longer loading” (needs investigation/regression fix).",
+    "Crypto entry bug: entering 1 unit of BTC becomes 10,000,000 automatically (likely unit/decimal scaling or formatting issue).",
+    "Budget entries add additional zeros to the user’s entered values (likely formatting/scaling).",
+    "Budget tab summary at the top is not reflective of user entries."
   ],
-  "isFixRequest": true,
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Hero background image showing a very organized city viewed from an organized desk space overlooking the city (header-city-desk-hero.dim_1920x640.png)",
   "existing_features": [
     {
       "id": "feature-create-a-central-dashboard-page-that-lets-a-signed-in-user-choose-between-tasks-goals-calendar-and-budget-sections-of-the-app",
@@ -156,6 +162,118 @@
         "REQ-18"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-integrate-live-crypto-price-pulls-in-the-crypto-section-so-the-user-does-not-need-to-manually-enter-a-current-price-when-adding-or-editing-a-crypto-position",
+      "title": "Integrate live crypto price pulls in the Crypto section so the user does not need to manually enter a current price when adding or editing a crypto position.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-crypto-amount-unit-bug-where-entering-1-unit-of-btc-is-displayed-or-treated-as-10-000-000-or-otherwise-incorrectly-scaled-ensuring-amounts-entered-in-the-ui-round-trip-correctly-and-calculations-reflect-the-intended-units",
+      "title": "Fix the Crypto amount/unit bug where entering 1 unit of BTC is displayed or treated as 10,000,000 (or otherwise incorrectly scaled), ensuring amounts entered in the UI round-trip correctly and calculations reflect the intended units.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-the-dashboard-summary-settings-settings-card-box-and-replace-it-with-a-compact-dropdown-control-that-allows-the-same-summary-configuration-enable-disable-sections-and-select-stats-recent-modes",
+      "title": "Remove the Dashboard “Summary Settings” settings-card box and replace it with a compact dropdown control that allows the same summary configuration (enable/disable sections and select Stats/Recent modes).",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-budget-amount-extra-zeros-issue-by-making-budget-item-amounts-round-trip-correctly-between-1-user-entered-decimal-dollars-in-the-form-2-stored-integer-cents-in-the-backend-and-3-displayed-currency-values-in-the-budget-table-and-edit-dialog",
+      "title": "Fix the Budget amount “extra zeros” issue by making Budget item amounts round-trip correctly between (1) user-entered decimal dollars in the form, (2) stored integer cents in the backend, and (3) displayed currency values in the Budget table and edit dialog.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-budget-tab-top-summary-so-it-accurately-reflects-the-user-s-budget-entries-by-ensuring-summary-computations-and-the-displayed-transaction-amounts-use-the-same-cents-to-dollars-scaling-and-provide-a-clear-summary-period-that-matches-what-users-expect-when-viewing-the-full-transaction-list",
+      "title": "Fix the Budget tab top summary so it accurately reflects the user’s budget entries by ensuring summary computations and the displayed transaction amounts use the same cents-to-dollars scaling, and provide a clear summary period that matches what users expect when viewing the full transaction list.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-calendar-tab-to-render-a-user-selectable-calendar-layout-with-three-options-full-year-view-monthly-view-and-weekly-view-persist-the-user-s-selected-view-locally-so-it-remains-consistent-when-returning-to-the-calendar-tab",
+      "title": "Update the Calendar tab to render a user-selectable calendar layout with three options: Full year view, Monthly view, and Weekly view; persist the user’s selected view locally so it remains consistent when returning to the Calendar tab.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-visible-per-day-scheduled-indicator-symbol-on-all-calendar-breakout-options-year-month-week-so-days-with-at-least-one-calendar-entry-are-visibly-marked-in-the-grid",
+      "title": "Add a visible per-day scheduled indicator symbol on all Calendar breakout options (year/month/week) so days with at least one calendar entry are visibly marked in the grid.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-tasks-tab-to-display-tasks-in-three-sections-1-day-of-the-week-tasks-2-recurring-daily-tasks-and-3-weekend-tasks-and-add-ui-controls-in-the-task-create-edit-flow-to-assign-a-task-to-one-of-these-sections",
+      "title": "Update the Tasks tab to display tasks in three sections: (1) Day-of-the-week tasks, (2) Recurring daily tasks, and (3) Weekend tasks, and add UI controls in the task create/edit flow to assign a task to one of these sections.",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-bi-directional-syncing-between-tasks-and-calendar-for-dated-items-so-that-a-any-task-with-a-due-date-appears-in-the-calendar-and-b-calendar-items-created-as-dated-tasks-appear-in-the-tasks-list-with-updates-deletes-kept-consistent-across-both",
+      "title": "Implement bi-directional syncing between Tasks and Calendar for dated items so that (a) any Task with a due date appears in the Calendar, and (b) Calendar items created as dated tasks appear in the Tasks list, with updates/deletes kept consistent across both.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-support-for-recurring-calendar-entries-with-user-selectable-recurrence-options-weekly-monthly-and-yearly-exposed-as-a-checkbox-toggle-control-in-the-calendar-entry-create-edit-flow",
+      "title": "Add support for recurring Calendar entries with user-selectable recurrence options: weekly, monthly, and yearly, exposed as a checkbox/toggle control in the Calendar entry create/edit flow.",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-new-dashboard-market-summary-section-that-shows-the-top-10-crypto-stocks-and-commodities-prices-and-display-it-on-the-dashboard-page",
+      "title": "Add a new Dashboard “market summary” section that shows the top 10 Crypto, Stocks, and Commodities prices, and display it on the dashboard page.",
+      "reqIds": [
+        "REQ-29"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-modernize-the-top-menu-header-ui-to-include-a-large-branded-title-the-everything-tracker-and-a-hero-style-background-image-depicting-a-very-organized-city-as-seen-from-an-organized-desk-space-overlooking-the-city",
+      "title": "Modernize the top menu/header UI to include a large branded title “The Everything Tracker” and a hero-style background image depicting a very organized city as seen from an organized desk space overlooking the city.",
+      "reqIds": [
+        "REQ-30"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enhance-the-crypto-page-to-include-1-a-total-portfolio-profit-loss-summary-computed-from-the-user-s-entries-using-live-current-price-vs-purchase-price-and-2-a-per-asset-profit-loss-status-listing-that-replaces-the-current-unique-assets-stat-concept-in-the-summary",
+      "title": "Enhance the Crypto page to include: (1) a total portfolio profit/loss summary computed from the user’s entries using live/current price vs purchase price, and (2) a per-asset profit/loss status listing that replaces the current “Unique Assets” stat concept in the summary.",
+      "reqIds": [
+        "REQ-31"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-calendar-entry-creation-editing-ui-to-allow-users-to-choose-whether-a-new-calendar-entry-is-a-task-or-an-event-so-that-calendar-created-tasks-participate-in-tasks-calendar-sync-while-calendar-created-events-remain-calendar-only",
+      "title": "Update the Calendar entry creation/editing UI to allow users to choose whether a new calendar entry is a Task or an Event, so that calendar-created tasks participate in Tasks↔Calendar sync while calendar-created events remain calendar-only.",
+      "reqIds": [
+        "REQ-32"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -228,6 +346,78 @@
     {
       "id": "AR-12",
       "summary": "Apply per-section theming, including a sports/paper-scroll/private theme for the To-Do list section",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Integrate external API price pulls for the Crypto section so users don’t need to manually enter current price",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Replace the Dashboard “summary settings” box with a smaller dropdown control for summary display options",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Fix Budget entry input bug where values gain additional zeros when saved/displayed",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Fix Budget tab top summary so it correctly reflects the user’s budget entries",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Add Calendar view layout selector (full-year, monthly, weekly) and render layout based on user selection",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Show a visible indicator on calendar day cells to denote scheduled items across year/month/week views",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-19",
+      "summary": "Update Tasks tab to support three sections: day-of-week tasks, recurring daily tasks, and weekend tasks",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-20",
+      "summary": "Sync Tasks and Calendar entries so dated items appear in both (bi-directional: creating/editing in either keeps them in sync)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "Add recurring options for Calendar entries (weekly/monthly/yearly) via a checkbox/control in the Calendar entry flow",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-22",
+      "summary": "Add a Dashboard “market summary” showing top 10 prices for crypto, stocks, and commodities",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-23",
+      "summary": "Modernize the top menu bar with large page title 'The Everything Tracker' and a background hero image",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Enhance Crypto page with total position profit summary and per-asset profit/loss status based on current price vs purchase price",
       "reqIds": [],
       "status": "pending"
     }

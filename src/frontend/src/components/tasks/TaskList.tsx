@@ -1,8 +1,9 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Edit, Trash2, Loader2 } from 'lucide-react';
-import { useToggleTaskCompletion, useDeleteTask } from '@/hooks/tasks/useTasks';
+import { useToggleTaskCompletion } from '@/hooks/tasks/useTasks';
+import { useDeleteSyncedTask } from '@/hooks/sync/useTaskCalendarSync';
 import { toast } from 'sonner';
 import type { Task } from '@/backend';
 import { useState } from 'react';
@@ -17,7 +18,7 @@ interface TaskListProps {
 export default function TaskList({ tasks, isLoading }: TaskListProps) {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const toggleCompletion = useToggleTaskCompletion();
-  const deleteTask = useDeleteTask();
+  const deleteTask = useDeleteSyncedTask();
 
   const handleToggle = async (id: bigint) => {
     try {
@@ -37,15 +38,10 @@ export default function TaskList({ tasks, isLoading }: TaskListProps) {
     }
   };
 
-  const formatDate = (timestamp: bigint | undefined) => {
-    if (!timestamp) return null;
-    return new Date(Number(timestamp) / 1000000).toLocaleDateString();
-  };
-
   const taskExamples = [
-    { title: 'Complete workout routine', description: 'Morning training session' },
-    { title: 'Review game strategy notes', description: 'Prepare for next match' },
-    { title: 'Update personal records', description: 'Log progress privately' },
+    { title: 'Morning workout', description: 'Daily routine at 6:00 AM' },
+    { title: 'Team standup', description: 'Every Monday at 9:00 AM' },
+    { title: 'Grocery shopping', description: 'Weekend errands' },
   ];
 
   if (isLoading) {
@@ -78,15 +74,15 @@ export default function TaskList({ tasks, isLoading }: TaskListProps) {
               <Checkbox
                 checked={task.completed}
                 onCheckedChange={() => handleToggle(task.id)}
-                disabled={toggleCompletion.isPending}
+                className="flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
+                <p className={`text-sm ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
                   {task.description}
                 </p>
                 {task.dueDate && (
-                  <p className="text-xs text-muted-foreground">
-                    Due: {formatDate(task.dueDate)}
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Due: {new Date(Number(task.dueDate) / 1000000).toLocaleDateString()}
                   </p>
                 )}
               </div>

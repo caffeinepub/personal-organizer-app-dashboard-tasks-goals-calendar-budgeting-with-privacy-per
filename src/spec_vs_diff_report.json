@@ -1,54 +1,78 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-14T20:53:11.090Z",
-  "summary": "Diff implements the new Crypto section (frontend route/page/components/hooks and backend state/migration), adds a persistent privacy status bar with secure/insecure styling, introduces a mobile-first Settings-style theme with toggle panels, adds SecurityNote messaging across sections, and adds empty-state SectionExamples across Tasks/Goals/Calendar/Budget/Crypto. One key uncertainty is whether backend Crypto CRUD methods are actually implemented, since the backend/main.mo diff is truncated before any crypto methods are shown. Some unrelated footer/social icon additions appear not requested.",
+  "generatedAt": "2026-02-14T22:00:32.761Z",
+  "summary": "The diff implements parts of the requested UI (market summary block, modern header title, calendar entry type control, recurrence plumbing, and crypto P/L calculations) and introduces backend data-shape changes (calendar entries now include taskId/recurrence with a migration). However, several acceptance criteria are not fully evidenced in the diff summary: true bi-directional Tasks↔Calendar sync behavior (especially calendar→task creation and cross-updates/deletes), real market prices for Stocks/Commodities, and inclusion/usage of the required hero image asset.",
   "missing_requirements": [
     {
-      "id": "REQ-17",
-      "requirement": "Backend support for per-user CRUD tracking for crypto entries (methods to create/list/update/delete entries scoped to the signed-in user).",
-      "reason": "Frontend hooks call actor.getCryptoPortfolio/createCryptoEntry/updateCryptoEntry/deleteCryptoEntry, but the backend/main.mo snippet shown only defines CryptoEntry type and cryptoPortfolios state; the required public methods are not present in the visible diff (file content is truncated).",
+      "id": "REQ-27",
+      "requirement": "Implement bi-directional syncing between Tasks and Calendar for dated items, including create/edit/delete consistency in both directions and no orphaned links, per-user.",
+      "reason": "The diff shows task→calendar creation triggered in backend (createTask calls addTaskToCalendar when dueDate exists) and frontend hooks that invalidate both queries, but does not provide evidence that calendar-created tasks actually create corresponding Task records, nor that edits/deletes propagate both ways without orphaned references. The calendar sync hook uses a generated taskId and only calls createCalendarEntry/updateCalendarEntry/deleteCalendarEntry, which by itself does not demonstrate the required task record creation/update/delete behavior.",
       "evidence": [
-        "frontend/src/hooks/crypto/useCrypto.ts",
-        "backend/main.mo"
+        "backend/main.mo (truncated): createTask(...) calls addTaskToCalendar(...) when dueDate is present",
+        "frontend/src/hooks/sync/useTaskCalendarSync.ts (truncated): useCreateSyncedCalendarTask calls actor.createCalendarEntry(...) with a generated taskId; no actor.createTask call is shown",
+        "frontend/src/components/calendar/CalendarEntryFormDialog.tsx (truncated): task-type entries route through sync hooks, event-type entries route through calendar-only hooks"
+      ]
+    },
+    {
+      "id": "REQ-29",
+      "requirement": "Dashboard market summary must show top 10 Crypto, Stocks, and Commodities with symbol/name and current USD price, fetched client-side with loading/error states and per-category fallback.",
+      "reason": "Crypto is fetched from CoinGecko, but Stocks and Commodities are returned as static arrays with price=0, and the UI renders 'N/A' when price is 0. This does not meet the 'current price (USD)' requirement for those categories.",
+      "evidence": [
+        "frontend/src/hooks/market/useMarketSummary.ts: fetchTopStocks() and fetchTopCommodities() return hardcoded lists with price: 0",
+        "frontend/src/components/dashboard/MarketSummarySection.tsx: renders 'N/A' when asset.price is not > 0"
+      ]
+    },
+    {
+      "id": "REQ-30",
+      "requirement": "Modernize the global header to include the branded title and a hero-style background image using the required static asset header-city-desk-hero.dim_1920x640.png served from frontend/public/assets/generated.",
+      "reason": "The branded title is present, but the diff summary does not show the required hero image asset being added, nor any explicit reference to 'header-city-desk-hero.dim_1920x640.png' in the header component or CSS. AppShell references a different generated image (organizer-logo) and relies on CSS classes for the hero background without showing the actual background asset wiring.",
+      "evidence": [
+        "frontend/src/components/layout/AppShell.tsx: uses organizer-logo.dim_512x512.png and hero-header-bg/overlay classes; no explicit reference to header-city-desk-hero.dim_1920x640.png is shown",
+        "File diff summary ADDED FILES: does not list frontend/public/assets/generated/header-city-desk-hero.dim_1920x640.png"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added social media icon imports (X/Facebook/Instagram) and footer/attribution-related UI elements not mentioned in the BuildRequest.",
-      "reason": "BuildRequest focuses on theme refresh, security status bar, examples, crypto section, and loading regression; it does not request social links/icons or new footer marketing/attribution elements.",
+      "description": "Added 'daily' recurrence option in backend and recurrence computation utilities, even though the spec only requested weekly/monthly/yearly recurrence options.",
+      "reason": "REQ-28 specifies recurrence options: None, Weekly, Monthly, Yearly. The diff adds #daily to the Recurrence type and implements daily recurrence stepping in computeRecurringOccurrences.",
       "evidence": [
-        "frontend/src/components/layout/AppShell.tsx"
+        "backend/main.mo: public type Recurrence includes #daily",
+        "backend/migration.mo: type Recurrence includes #daily",
+        "frontend/src/utils/calendar/recurrence.ts: handles RecurrenceEnum.daily"
+      ]
+    },
+    {
+      "description": "Budget currency formatting and other unrelated UI/theming/feature changes beyond the requested new market summary block.",
+      "reason": "Non-goals/constraints call out avoiding unrelated changes to existing dashboard summaries and imply focusing changes to what is necessary. The diff summary indicates additional improvements like budget formatting corrections and additional banners/components not requested by REQ-27..REQ-32.",
+      "evidence": [
+        "frontend-file-summaries.txt: \"Budget page with corrected currency formatting...\" and other non-requested UI changes",
+        "frontend/src/index.css: significant theme/token changes beyond the requested header hero change"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.66,
   "changed_files": [
     "backend/main.mo",
     "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/auth/RequireAuth.tsx",
+    "frontend/src/components/calendar/CalendarEntryFormDialog.tsx",
     "frontend/src/components/calendar/CalendarEntryList.tsx",
-    "frontend/src/components/common/PrivacyStatusBar.tsx",
-    "frontend/src/components/common/SectionExamples.tsx",
-    "frontend/src/components/common/SecurityNote.tsx",
-    "frontend/src/components/crypto/CryptoEntryFormDialog.tsx",
-    "frontend/src/components/crypto/CryptoEntryList.tsx",
     "frontend/src/components/crypto/CryptoSummary.tsx",
-    "frontend/src/components/dashboard/DashboardSummaryToggles.tsx",
-    "frontend/src/components/goals/GoalList.tsx",
+    "frontend/src/components/dashboard/MarketSummarySection.tsx",
     "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/tasks/TaskFormDialog.tsx",
     "frontend/src/components/tasks/TaskList.tsx",
-    "frontend/src/hooks/crypto/useCrypto.ts",
+    "frontend/src/hooks/calendar/useCalendar.ts",
+    "frontend/src/hooks/market/useMarketSummary.ts",
+    "frontend/src/hooks/sync/useTaskCalendarSync.ts",
+    "frontend/src/hooks/tasks/useTasks.ts",
     "frontend/src/index.css",
-    "frontend/src/pages/BudgetPage.tsx",
-    "frontend/src/pages/CalendarPage.tsx",
-    "frontend/src/pages/CryptoPage.tsx",
     "frontend/src/pages/DashboardPage.tsx",
-    "frontend/src/pages/GoalsPage.tsx",
-    "frontend/src/pages/TasksPage.tsx",
+    "frontend/src/utils/calendar/entryIndicators.ts",
+    "frontend/src/utils/calendar/recurrence.ts",
+    "frontend/src/utils/crypto/profitLoss.ts",
     "frontend/tailwind.config.js",
     "project_state.json"
   ]

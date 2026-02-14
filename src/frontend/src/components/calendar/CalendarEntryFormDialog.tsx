@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateCalendarEntry, useUpdateCalendarEntry } from '@/hooks/calendar/useCalendar';
+import { useCreateSyncedCalendarTask, useUpdateSyncedCalendarEntry } from '@/hooks/sync/useTaskCalendarSync';
 import { toast } from 'sonner';
-import type { CalendarEntry } from '@/backend';
+import type { CalendarEntry, Recurrence } from '@/backend';
+import { Recurrence as RecurrenceEnum } from '@/backend';
 
 interface CalendarEntryFormDialogProps {
   open: boolean;
@@ -24,8 +27,13 @@ export default function CalendarEntryFormDialog({
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [entryType, setEntryType] = useState<'event' | 'task'>('event');
+  const [recurrence, setRecurrence] = useState<string>('none');
+  
   const createEntry = useCreateCalendarEntry();
   const updateEntry = useUpdateCalendarEntry();
+  const createSyncedTask = useCreateSyncedCalendarTask();
+  const updateSyncedEntry = useUpdateSyncedCalendarEntry();
 
   useEffect(() => {
     if (editingEntry) {
@@ -40,12 +48,16 @@ export default function CalendarEntryFormDialog({
       } else {
         setEndTime('');
       }
+      setEntryType(editingEntry.taskId !== undefined && editingEntry.taskId !== null ? 'task' : 'event');
+      setRecurrence(editingEntry.recurrence || 'none');
     } else {
       setTitle('');
       setDescription('');
       setStartDate('');
       setStartTime('');
       setEndTime('');
+      setEntryType('event');
+      setRecurrence('none');
     }
   }, [editingEntry, open]);
 
@@ -65,28 +77,53 @@ export default function CalendarEntryFormDialog({
       endTimestamp = BigInt(endDateTime.getTime() * 1000000);
     }
 
+    const recurrenceValue: Recurrence | null = recurrence === 'none' ? null : (recurrence as Recurrence);
+
     try {
       if (editingEntry) {
-        await updateEntry.mutateAsync({
-          id: editingEntry.id,
-          title: title.trim(),
-          description: description.trim(),
-          startTime: startTimestamp,
-          endTime: endTimestamp,
-        });
-        toast.success('Event updated successfully');
+        if (entryType === 'task') {
+          await updateSyncedEntry.mutateAsync({
+            entryId: editingEntry.id,
+            title: title.trim(),
+            description: description.trim(),
+            startTime: startTimestamp,
+            endTime: endTimestamp,
+            recurrence: recurrenceValue,
+            isTask: true,
+          });
+        } else {
+          await updateEntry.mutateAsync({
+            id: editingEntry.id,
+            title: title.trim(),
+            description: description.trim(),
+            startTime: startTimestamp,
+            endTime: endTimestamp,
+          });
+        }
+        toast.success('Entry updated successfully');
       } else {
-        await createEntry.mutateAsync({
-          title: title.trim(),
-          description: description.trim(),
-          startTime: startTimestamp,
-          endTime: endTimestamp,
-        });
-        toast.success('Event created successfully');
+        if (entryType === 'task') {
+          await createSyncedTask.mutateAsync({
+            title: title.trim(),
+            description: description.trim(),
+            startTime: startTimestamp,
+            endTime: endTimestamp,
+            recurrence: recurrenceValue,
+          });
+          toast.success('Task created successfully');
+        } else {
+          await createEntry.mutateAsync({
+            title: title.trim(),
+            description: description.trim(),
+            startTime: startTimestamp,
+            endTime: endTimestamp,
+          });
+          toast.success('Event created successfully');
+        }
       }
       onOpenChange(false);
     } catch (error) {
-      toast.error(editingEntry ? 'Failed to update event' : 'Failed to create event');
+      toast.error(editingEntry ? 'Failed to update entry' : 'Failed to create entry');
     }
   };
 
@@ -94,14 +131,26 @@ export default function CalendarEntryFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editingEntry ? 'Edit Event' : 'Create Event'}</DialogTitle>
+          <DialogTitle>{editingEntry ? 'Edit Entry' : 'Create Entry'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="entryType">Type</Label>
+            <Select value={entryType} onValueChange={(v) => setEntryType(v as 'event' | 'task')}>
+              <SelectTrigger id="entryType">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="event">Event</SelectItem>
+                <SelectItem value="task">Task</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
               id="title"
-              placeholder="Enter event title"
+              placeholder="Enter title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
@@ -111,7 +160,7 @@ export default function CalendarEntryFormDialog({
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              placeholder="Enter event description"
+              placeholder="Enter description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -146,11 +195,26 @@ export default function CalendarEntryFormDialog({
               onChange={(e) => setEndTime(e.target.value)}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="recurrence">Recurrence</Label>
+            <Select value={recurrence} onValueChange={setRecurrence}>
+              <SelectTrigger id="recurrence">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value={RecurrenceEnum.daily}>Daily</SelectItem>
+                <SelectItem value={RecurrenceEnum.weekly}>Weekly</SelectItem>
+                <SelectItem value={RecurrenceEnum.monthly}>Monthly</SelectItem>
+                <SelectItem value={RecurrenceEnum.yearly}>Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createEntry.isPending || updateEntry.isPending}>
+            <Button type="submit" disabled={createEntry.isPending || updateEntry.isPending || createSyncedTask.isPending || updateSyncedEntry.isPending}>
               {editingEntry ? 'Update' : 'Create'}
             </Button>
           </DialogFooter>

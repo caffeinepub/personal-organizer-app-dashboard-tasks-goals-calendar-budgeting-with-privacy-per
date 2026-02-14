@@ -1,10 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from '../useActor';
 import { useInternetIdentity } from '../useInternetIdentity';
-import type { Task } from '@/backend';
-import { computeDigest } from '@/utils/integrity/sha256';
-import { getSalt } from '@/utils/integrity/salts';
-import { canonicalizeTask } from '@/utils/integrity/canonicalize';
+import type { Task, TaskType } from '@/backend';
 
 export function useGetTasks() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -26,12 +23,21 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ description, dueDate }: { description: string; dueDate: bigint | null }) => {
+    mutationFn: async ({
+      description,
+      dueDate,
+      taskType,
+    }: {
+      description: string;
+      dueDate: bigint | null;
+      taskType: TaskType;
+    }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.createTask(description, dueDate);
+      return actor.createTask(description, dueDate, taskType);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['calendarEntries'] });
     },
   });
 }
@@ -45,16 +51,19 @@ export function useUpdateTask() {
       id,
       description,
       dueDate,
+      taskType,
     }: {
       id: bigint;
       description: string;
       dueDate: bigint | null;
+      taskType: TaskType;
     }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.updateTask(id, description, dueDate);
+      return actor.updateTask(id, description, dueDate, taskType);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['calendarEntries'] });
     },
   });
 }
@@ -85,6 +94,7 @@ export function useDeleteTask() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['calendarEntries'] });
     },
   });
 }

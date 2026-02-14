@@ -2,12 +2,14 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-regression-where-the-app-is-no-longer-loading-by-identifying-and-resolving-the-runtime-build-error-s-so-the-initial-route-renders-successfully-and-navigation-to-existing-sections-dashboard-tasks-goals-calendar-budget-works-without-a-blank-screen-or-crash",
-      "featureTitle": "Fix the regression where the app is \"no longer loading\" by identifying and resolving the runtime/build error(s) so the initial route renders successfully and navigation to existing sections (Dashboard, Tasks, Goals, Calendar, Budget) works without a blank screen or crash.",
+      "featureId": "feature-implement-bi-directional-syncing-between-tasks-and-calendar-for-dated-items-so-that-a-any-task-with-a-due-date-appears-in-the-calendar-and-b-calendar-items-created-as-dated-tasks-appear-in-the-tasks-list-with-updates-deletes-kept-consistent-across-both",
+      "featureTitle": "Implement bi-directional syncing between Tasks and Calendar for dated items so that (a) any Task with a due date appears in the Calendar, and (b) Calendar items created as dated tasks appear in the Tasks list, with updates/deletes kept consistent across both.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/auth/RequireAuth.tsx",
-        "frontend/src/components/layout/AppShell.tsx"
+        "frontend/src/components/tasks/TaskFormDialog.tsx",
+        "frontend/src/components/tasks/TaskList.tsx",
+        "frontend/src/hooks/calendar/useCalendar.ts",
+        "frontend/src/hooks/sync/useTaskCalendarSync.ts",
+        "frontend/src/hooks/tasks/useTasks.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -18,93 +20,19 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-12"
+        "REQ-27"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-persistent-privacy-confirmed-live-status-indicator-bar-with-a-video-game-themed-look-that-is-purple-when-the-user-is-securely-logged-in-and-flashes-turns-red-when-the-session-is-not-secure-e-g-user-is-not-authenticated",
-      "featureTitle": "Add a persistent \"privacy confirmed\" live status indicator bar with a video game themed look that is purple when the user is securely logged in, and flashes/turns red when the session is not secure (e.g., user is not authenticated).",
+      "featureId": "feature-add-support-for-recurring-calendar-entries-with-user-selectable-recurrence-options-weekly-monthly-and-yearly-exposed-as-a-checkbox-toggle-control-in-the-calendar-entry-create-edit-flow",
+      "featureTitle": "Add support for recurring Calendar entries with user-selectable recurrence options: weekly, monthly, and yearly, exposed as a checkbox/toggle control in the Calendar entry create/edit flow.",
       "files": [
-        "frontend/src/components/common/PrivacyStatusBar.tsx",
-        "frontend/src/components/layout/AppShell.tsx",
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-13"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-redesign-the-global-ui-theme-to-a-mobile-first-everything-tracker-experience-that-feels-fun-helpful-and-easy-to-use-with-apple-settings-style-toggle-boxes-panels-for-preferences-and-settings-like-controls-across-the-app",
-      "featureTitle": "Redesign the global UI theme to a mobile-first “everything tracker” experience that feels fun, helpful, and easy to use, with Apple Settings–style toggle boxes/panels for preferences and settings-like controls across the app.",
-      "files": [
-        "frontend/src/components/dashboard/DashboardSummaryToggles.tsx",
-        "frontend/src/components/layout/AppShell.tsx",
-        "frontend/src/index.css",
-        "frontend/src/pages/BudgetPage.tsx",
-        "frontend/src/pages/CalendarPage.tsx",
-        "frontend/src/pages/DashboardPage.tsx",
-        "frontend/src/pages/GoalsPage.tsx",
-        "frontend/src/pages/TasksPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-14"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-make-security-encryption-visibility-explicit-in-the-ui-by-adding-clear-friendly-copy-near-data-entry-areas-indicating-that-entries-are-protected-with-encryption-integrity-safeguards-without-claiming-any-third-party-certification-or-external-security-service",
-      "featureTitle": "Make security/encryption visibility explicit in the UI by adding clear, friendly copy near data entry areas indicating that entries are protected with encryption/integrity safeguards, without claiming any third-party certification or external security service.",
-      "files": [
-        "frontend/src/components/common/SecurityNote.tsx",
-        "frontend/src/pages/BudgetPage.tsx",
-        "frontend/src/pages/CalendarPage.tsx",
-        "frontend/src/pages/CryptoPage.tsx",
-        "frontend/src/pages/GoalsPage.tsx",
-        "frontend/src/pages/TasksPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-15"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-provide-2-3-in-app-example-entries-templates-in-each-organizer-section-tasks-goals-calendar-budget-and-crypto-to-guide-users-on-what-information-best-pertains-to-each-area-shown-as-examples-when-the-user-has-no-items-yet-and-or-as-quick-add-suggestions",
-      "featureTitle": "Provide 2–3 in-app example entries/templates in each organizer section (Tasks, Goals, Calendar, Budget, and Crypto) to guide users on what information best pertains to each area, shown as examples when the user has no items yet and/or as quick-add suggestions.",
-      "files": [
+        "frontend/src/components/calendar/CalendarEntryFormDialog.tsx",
         "frontend/src/components/calendar/CalendarEntryList.tsx",
-        "frontend/src/components/common/SectionExamples.tsx",
-        "frontend/src/components/crypto/CryptoEntryList.tsx",
-        "frontend/src/components/goals/GoalList.tsx",
-        "frontend/src/components/tasks/TaskList.tsx",
-        "frontend/src/pages/BudgetPage.tsx",
-        "frontend/src/pages/CryptoPage.tsx"
+        "frontend/src/hooks/calendar/useCalendar.ts",
+        "frontend/src/utils/calendar/entryIndicators.ts",
+        "frontend/src/utils/calendar/recurrence.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -115,22 +43,37 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-16"
+        "REQ-28"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-new-crypto-section-to-the-app-including-navigation-access-a-dedicated-page-and-basic-per-user-crud-tracking-for-crypto-entries-with-a-ui-theme-resembling-coinbase-visual-style-only-no-external-api-integration",
-      "featureTitle": "Add a new \"Crypto\" section to the app, including navigation access, a dedicated page, and basic per-user CRUD tracking for crypto entries, with a UI theme resembling Coinbase (visual style only; no external API integration).",
+      "featureId": "feature-add-a-new-dashboard-market-summary-section-that-shows-the-top-10-crypto-stocks-and-commodities-prices-and-display-it-on-the-dashboard-page",
+      "featureTitle": "Add a new Dashboard “market summary” section that shows the top 10 Crypto, Stocks, and Commodities prices, and display it on the dashboard page.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/crypto/CryptoEntryFormDialog.tsx",
-        "frontend/src/components/crypto/CryptoEntryList.tsx",
-        "frontend/src/components/crypto/CryptoSummary.tsx",
+        "frontend/src/components/dashboard/MarketSummarySection.tsx",
+        "frontend/src/hooks/market/useMarketSummary.ts",
+        "frontend/src/pages/DashboardPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-29"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-modernize-the-top-menu-header-ui-to-include-a-large-branded-title-the-everything-tracker-and-a-hero-style-background-image-depicting-a-very-organized-city-as-seen-from-an-organized-desk-space-overlooking-the-city",
+      "featureTitle": "Modernize the top menu/header UI to include a large branded title “The Everything Tracker” and a hero-style background image depicting a very organized city as seen from an organized desk space overlooking the city.",
+      "files": [
         "frontend/src/components/layout/AppShell.tsx",
-        "frontend/src/hooks/crypto/useCrypto.ts",
-        "frontend/src/index.css",
-        "frontend/src/pages/CryptoPage.tsx"
+        "frontend/src/index.css"
       ],
       "components": [
         "authorization@4.0.0",
@@ -141,17 +84,17 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-17"
+        "REQ-30"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-apply-per-section-theming-so-that-the-tasks-to-do-list-section-resembles-a-sports-related-paper-scroll-private-theme-while-still-matching-the-app-s-overall-mobile-first-tracker-design-and-not-harming-readability",
-      "featureTitle": "Apply per-section theming so that the Tasks (to-do list) section resembles a sports-related / paper scroll / private theme, while still matching the app’s overall mobile-first tracker design and not harming readability.",
+      "featureId": "feature-enhance-the-crypto-page-to-include-1-a-total-portfolio-profit-loss-summary-computed-from-the-user-s-entries-using-live-current-price-vs-purchase-price-and-2-a-per-asset-profit-loss-status-listing-that-replaces-the-current-unique-assets-stat-concept-in-the-summary",
+      "featureTitle": "Enhance the Crypto page to include: (1) a total portfolio profit/loss summary computed from the user’s entries using live/current price vs purchase price, and (2) a per-asset profit/loss status listing that replaces the current “Unique Assets” stat concept in the summary.",
       "files": [
-        "frontend/src/components/tasks/TaskList.tsx",
+        "frontend/src/components/crypto/CryptoSummary.tsx",
         "frontend/src/index.css",
-        "frontend/src/pages/TasksPage.tsx"
+        "frontend/src/utils/crypto/profitLoss.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -162,7 +105,28 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-18"
+        "REQ-31"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-calendar-entry-creation-editing-ui-to-allow-users-to-choose-whether-a-new-calendar-entry-is-a-task-or-an-event-so-that-calendar-created-tasks-participate-in-tasks-calendar-sync-while-calendar-created-events-remain-calendar-only",
+      "featureTitle": "Update the Calendar entry creation/editing UI to allow users to choose whether a new calendar entry is a Task or an Event, so that calendar-created tasks participate in Tasks↔Calendar sync while calendar-created events remain calendar-only.",
+      "files": [
+        "frontend/src/components/calendar/CalendarEntryFormDialog.tsx",
+        "frontend/src/components/calendar/CalendarEntryList.tsx",
+        "frontend/src/hooks/sync/useTaskCalendarSync.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-32"
       ],
       "confidence": "high"
     }

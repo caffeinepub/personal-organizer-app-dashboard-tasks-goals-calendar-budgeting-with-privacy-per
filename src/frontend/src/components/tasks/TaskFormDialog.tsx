@@ -3,9 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCreateTask, useUpdateTask } from '@/hooks/tasks/useTasks';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useCreateSyncedTask, useUpdateSyncedTask } from '@/hooks/sync/useTaskCalendarSync';
 import { toast } from 'sonner';
-import type { Task } from '@/backend';
+import type { Task, TaskType, DayOfWeek } from '@/backend';
+import { DayOfWeek as DayOfWeekEnum } from '@/backend';
+import { getTaskSection, getTaskDayOfWeek } from '@/utils/tasks/taskTypeLabel';
 
 interface TaskFormDialogProps {
   open: boolean;
@@ -16,8 +19,11 @@ interface TaskFormDialogProps {
 export default function TaskFormDialog({ open, onOpenChange, editingTask }: TaskFormDialogProps) {
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const createTask = useCreateTask();
-  const updateTask = useUpdateTask();
+  const [taskTypeSection, setTaskTypeSection] = useState<'dayOfWeek' | 'daily' | 'weekend'>('daily');
+  const [selectedDay, setSelectedDay] = useState<DayOfWeek>(DayOfWeekEnum.monday);
+  
+  const createTask = useCreateSyncedTask();
+  const updateTask = useUpdateSyncedTask();
 
   useEffect(() => {
     if (editingTask) {
@@ -28,11 +34,29 @@ export default function TaskFormDialog({ open, onOpenChange, editingTask }: Task
       } else {
         setDueDate('');
       }
+      const section = getTaskSection(editingTask.taskType);
+      setTaskTypeSection(section);
+      if (section === 'dayOfWeek') {
+        const day = getTaskDayOfWeek(editingTask.taskType);
+        if (day) setSelectedDay(day);
+      }
     } else {
       setDescription('');
       setDueDate('');
+      setTaskTypeSection('daily');
+      setSelectedDay(DayOfWeekEnum.monday);
     }
   }, [editingTask, open]);
+
+  const buildTaskType = (): TaskType => {
+    if (taskTypeSection === 'dayOfWeek') {
+      return { __kind__: 'dayOfWeek', dayOfWeek: selectedDay };
+    } else if (taskTypeSection === 'daily') {
+      return { __kind__: 'daily', daily: null };
+    } else {
+      return { __kind__: 'weekend', weekend: null };
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,22 +65,27 @@ export default function TaskFormDialog({ open, onOpenChange, editingTask }: Task
       return;
     }
 
-    const dueDateTimestamp = dueDate
-      ? BigInt(new Date(dueDate).getTime() * 1000000)
-      : null;
+    const taskType = buildTaskType();
+    let dueDateTimestamp: bigint | null = null;
+    if (dueDate) {
+      const date = new Date(dueDate);
+      dueDateTimestamp = BigInt(date.getTime() * 1000000);
+    }
 
     try {
       if (editingTask) {
         await updateTask.mutateAsync({
-          id: editingTask.id,
+          taskId: editingTask.id,
           description: description.trim(),
           dueDate: dueDateTimestamp,
+          taskType,
         });
         toast.success('Task updated successfully');
       } else {
         await createTask.mutateAsync({
           description: description.trim(),
-          dueDate: dueDateTimestamp,
+          dueDate: dueDateTimestamp!,
+          taskType,
         });
         toast.success('Task created successfully');
       }
@@ -92,6 +121,36 @@ export default function TaskFormDialog({ open, onOpenChange, editingTask }: Task
               onChange={(e) => setDueDate(e.target.value)}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="taskType">Task Type</Label>
+            <Select value={taskTypeSection} onValueChange={(v) => setTaskTypeSection(v as any)}>
+              <SelectTrigger id="taskType">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="dayOfWeek">Day of Week</SelectItem>
+                <SelectItem value="daily">Recurring Daily</SelectItem>
+                <SelectItem value="weekend">Weekend</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {taskTypeSection === 'dayOfWeek' && (
+            <div className="space-y-2">
+              <Label htmlFor="dayOfWeek">Select Day</Label>
+              <Select value={selectedDay} onValueChange={(v) => setSelectedDay(v as DayOfWeek)}>
+                <SelectTrigger id="dayOfWeek">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={DayOfWeekEnum.monday}>Monday</SelectItem>
+                  <SelectItem value={DayOfWeekEnum.tuesday}>Tuesday</SelectItem>
+                  <SelectItem value={DayOfWeekEnum.wednesday}>Wednesday</SelectItem>
+                  <SelectItem value={DayOfWeekEnum.thursday}>Thursday</SelectItem>
+                  <SelectItem value={DayOfWeekEnum.friday}>Friday</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel

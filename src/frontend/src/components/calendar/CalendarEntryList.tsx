@@ -1,7 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Loader2, Calendar as CalendarIcon } from 'lucide-react';
-import { useDeleteCalendarEntry } from '@/hooks/calendar/useCalendar';
+import { Badge } from '@/components/ui/badge';
+import { Edit, Trash2, Loader2, Calendar as CalendarIcon, Repeat } from 'lucide-react';
+import { useDeleteSyncedCalendarEntry } from '@/hooks/sync/useTaskCalendarSync';
 import { toast } from 'sonner';
 import type { CalendarEntry } from '@/backend';
 import { useState } from 'react';
@@ -15,15 +16,15 @@ interface CalendarEntryListProps {
 
 export default function CalendarEntryList({ entries, isLoading }: CalendarEntryListProps) {
   const [editingEntry, setEditingEntry] = useState<CalendarEntry | null>(null);
-  const deleteEntry = useDeleteCalendarEntry();
+  const deleteEntry = useDeleteSyncedCalendarEntry();
 
   const handleDelete = async (id: bigint) => {
-    if (!confirm('Are you sure you want to delete this event?')) return;
+    if (!confirm('Are you sure you want to delete this entry?')) return;
     try {
       await deleteEntry.mutateAsync(id);
-      toast.success('Event deleted successfully');
+      toast.success('Entry deleted successfully');
     } catch (error) {
-      toast.error('Failed to delete event');
+      toast.error('Failed to delete entry');
     }
   };
 
@@ -33,6 +34,11 @@ export default function CalendarEntryList({ entries, isLoading }: CalendarEntryL
       date: date.toLocaleDateString(),
       time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
+  };
+
+  const getRecurrenceLabel = (recurrence: string | undefined | null): string => {
+    if (!recurrence) return '';
+    return recurrence.charAt(0).toUpperCase() + recurrence.slice(1);
   };
 
   const sortedEntries = [...entries].sort((a, b) => {
@@ -58,7 +64,7 @@ export default function CalendarEntryList({ entries, isLoading }: CalendarEntryL
       <div className="space-y-4">
         <Card className="settings-card">
           <CardContent className="py-8 text-center text-muted-foreground text-sm">
-            No events yet. Create your first event to get started!
+            No entries yet. Create your first entry to get started!
           </CardContent>
         </Card>
         <SectionExamples sectionName="Calendar Events" examples={calendarExamples} />
@@ -72,6 +78,7 @@ export default function CalendarEntryList({ entries, isLoading }: CalendarEntryL
         {sortedEntries.map((entry) => {
           const start = formatDateTime(entry.startTime);
           const end = entry.endTime ? formatDateTime(entry.endTime) : null;
+          const isTask = entry.taskId !== undefined && entry.taskId !== null;
 
           return (
             <Card key={entry.id.toString()} className="settings-card">
@@ -80,7 +87,16 @@ export default function CalendarEntryList({ entries, isLoading }: CalendarEntryL
                   <CalendarIcon className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold">{entry.title}</h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-semibold">{entry.title}</h3>
+                    {isTask && <Badge variant="secondary" className="text-xs">Task</Badge>}
+                    {entry.recurrence && (
+                      <Badge variant="outline" className="text-xs flex items-center gap-1">
+                        <Repeat className="h-3 w-3" />
+                        {getRecurrenceLabel(entry.recurrence)}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{entry.description}</p>
                   <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                     <span>{start.date}</span>

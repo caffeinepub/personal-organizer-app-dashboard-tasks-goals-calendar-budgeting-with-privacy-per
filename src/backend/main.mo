@@ -4,19 +4,35 @@ import Text "mo:core/Text";
 import Nat "mo:core/Nat";
 import List "mo:core/List";
 import Order "mo:core/Order";
-import Iter "mo:core/Iter";
-import Array "mo:core/Array";
 import Time "mo:core/Time";
 import Runtime "mo:core/Runtime";
 import Principal "mo:core/Principal";
+import Iter "mo:core/Iter";
+import Array "mo:core/Array";
+import Migration "migration";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-import Migration "migration";
+
+// Use migration to preserve data across upgrades
 
 (with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
+
+  public type TaskType = {
+    #dayOfWeek : DayOfWeek;
+    #daily;
+    #weekend;
+  };
+
+  public type DayOfWeek = {
+    #monday;
+    #tuesday;
+    #wednesday;
+    #thursday;
+    #friday;
+  };
 
   public type Task = {
     id : Nat;
@@ -24,12 +40,7 @@ actor {
     completed : Bool;
     createdAt : Time.Time;
     dueDate : ?Time.Time;
-  };
-
-  module Task {
-    public func compare(a : Task, b : Task) : Order.Order {
-      Nat.compare(a.id, b.id);
-    };
+    taskType : TaskType;
   };
 
   public type Goal = {
@@ -40,10 +51,11 @@ actor {
     progress : Nat;
   };
 
-  module Goal {
-    public func compare(a : Goal, b : Goal) : Order.Order {
-      Nat.compare(a.id, b.id);
-    };
+  public type Recurrence = {
+    #daily;
+    #weekly;
+    #monthly;
+    #yearly;
   };
 
   public type CalendarEntry = {
@@ -52,12 +64,8 @@ actor {
     description : Text;
     startTime : Time.Time;
     endTime : ?Time.Time;
-  };
-
-  module CalendarEntry {
-    public func compare(a : CalendarEntry, b : CalendarEntry) : Order.Order {
-      Nat.compare(a.id, b.id);
-    };
+    taskId : ?Nat;
+    recurrence : ?Recurrence;
   };
 
   public type BudgetItemType = {
@@ -73,12 +81,6 @@ actor {
     itemType : BudgetItemType;
   };
 
-  module BudgetItem {
-    public func compare(a : BudgetItem, b : BudgetItem) : Order.Order {
-      Nat.compare(a.id, b.id);
-    };
-  };
-
   public type CryptoEntry = {
     id : Nat;
     symbol : Text;
@@ -89,17 +91,10 @@ actor {
     updatedAt : Time.Time;
   };
 
-  module CryptoEntry {
-    public func compare(a : CryptoEntry, b : CryptoEntry) : Order.Order {
-      Nat.compare(a.id, b.id);
-    };
-  };
-
   public type UserProfile = {
     name : Text;
   };
 
-  // Persistent state for all users
   let tasks = Map.empty<Principal, List.List<Task>>();
   let goals = Map.empty<Principal, List.List<Goal>>();
   let calendarEntries = Map.empty<Principal, List.List<CalendarEntry>>();
@@ -107,7 +102,6 @@ actor {
   let userProfiles = Map.empty<Principal, UserProfile>();
   let cryptoPortfolios = Map.empty<Principal, List.List<CryptoEntry>>();
 
-  // Profiles
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view profiles");
@@ -129,8 +123,7 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Tasks - Create Task
-  public shared ({ caller }) func createTask(description : Text, dueDate : ?Time.Time) : async Task {
+  public shared ({ caller }) func createTask(description : Text, dueDate : ?Time.Time, taskType : TaskType) : async Task {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can create tasks");
     };
@@ -142,6 +135,7 @@ actor {
       completed = false;
       createdAt = Time.now();
       dueDate;
+      taskType;
     };
 
     let userTasks = switch (tasks.get(caller)) {
@@ -151,10 +145,17 @@ actor {
 
     userTasks.add(task);
     tasks.add(caller, userTasks);
+
+    switch (dueDate) {
+      case (?date) {
+        addTaskToCalendar(caller, task, date, null, null);
+      };
+      case (null) {};
+    };
+
     task;
   };
 
-  // Tasks - Get All Tasks
   public query ({ caller }) func getTasks(user : Principal) : async [Task] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view tasks");
@@ -164,12 +165,11 @@ actor {
     };
     switch (tasks.get(user)) {
       case (null) { [] };
-      case (?userTasks) { userTasks.toArray().sort() };
+      case (?userTasks) { userTasks.toArray() };
     };
   };
 
-  // Tasks - Update Task
-  public shared ({ caller }) func updateTask(taskId : Nat, description : Text, dueDate : ?Time.Time) : async ?Task {
+  public shared ({ caller }) func updateTask(taskId : Nat, description : Text, dueDate : ?Time.Time, taskType : TaskType) : async ?Task {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can update tasks");
     };
@@ -179,14 +179,19 @@ actor {
       case (?existing) { existing };
     };
 
+    var updatedTask : ?Task = null;
+
     let updatedTasks = userTasks.map<Task, Task>(
       func(task) {
         if (task.id == taskId) {
-          {
+          let newTask = {
             task with
             description;
             dueDate;
+            taskType;
           };
+          updatedTask := ?newTask;
+          newTask;
         } else {
           task;
         };
@@ -194,11 +199,17 @@ actor {
     );
 
     tasks.add(caller, updatedTasks);
-    let filtered = updatedTasks.toArray().filter(func(task) { task.id == taskId });
-    if (filtered.size() > 0) { ?filtered[0] } else { null };
+
+    switch (updatedTask, dueDate) {
+      case (?task, _) {
+        updateTaskInCalendar(caller, task);
+      };
+      case (null, _) {};
+    };
+
+    updatedTask;
   };
 
-  // Tasks - Toggle Task Completion
   public shared ({ caller }) func toggleTaskCompletion(taskId : Nat) : async ?Task {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can toggle task completion");
@@ -224,7 +235,6 @@ actor {
     if (filtered.size() > 0) { ?filtered[0] } else { null };
   };
 
-  // Tasks - Delete Task
   public shared ({ caller }) func deleteTask(taskId : Nat) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can delete tasks");
@@ -240,9 +250,10 @@ actor {
     );
 
     tasks.add(caller, filteredTasks);
+
+    deleteTaskFromCalendar(caller, taskId);
   };
 
-  // Goals - Create Goal
   public shared ({ caller }) func createGoal(title : Text, description : Text, targetDate : ?Time.Time) : async Goal {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can create goals");
@@ -267,7 +278,6 @@ actor {
     goal;
   };
 
-  // Goals - Get All Goals
   public query ({ caller }) func getGoals(user : Principal) : async [Goal] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view goals");
@@ -277,11 +287,10 @@ actor {
     };
     switch (goals.get(user)) {
       case (null) { [] };
-      case (?userGoals) { userGoals.toArray().sort() };
+      case (?userGoals) { userGoals.toArray() };
     };
   };
 
-  // Goals - Update Goal
   public shared ({ caller }) func updateGoal(goalId : Nat, title : Text, description : Text, targetDate : ?Time.Time) : async ?Goal {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can update goals");
@@ -312,7 +321,6 @@ actor {
     if (filtered.size() > 0) { ?filtered[0] } else { null };
   };
 
-  // Goals - Update Goal Progress
   public shared ({ caller }) func updateGoalProgress(goalId : Nat, progress : Nat) : async ?Goal {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can update goal progress");
@@ -338,7 +346,6 @@ actor {
     if (filtered.size() > 0) { ?filtered[0] } else { null };
   };
 
-  // Goals - Delete Goal
   public shared ({ caller }) func deleteGoal(goalId : Nat) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can delete goals");
@@ -356,8 +363,7 @@ actor {
     goals.add(caller, filteredGoals);
   };
 
-  // Calendar - Create Calendar Entry
-  public shared ({ caller }) func createCalendarEntry(title : Text, description : Text, startTime : Time.Time, endTime : ?Time.Time) : async CalendarEntry {
+  public shared ({ caller }) func createCalendarEntry(title : Text, description : Text, startTime : Time.Time, endTime : ?Time.Time, recurrence : ?Recurrence, taskId : ?Nat) : async CalendarEntry {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can create calendar entries");
     };
@@ -369,6 +375,8 @@ actor {
       description;
       startTime;
       endTime;
+      taskId;
+      recurrence;
     };
 
     let userEntries = switch (calendarEntries.get(caller)) {
@@ -378,10 +386,17 @@ actor {
 
     userEntries.add(entry);
     calendarEntries.add(caller, userEntries);
+
+    switch (taskId) {
+      case (?_id) {
+        createTaskFromCalendarEntry(caller, entry, title, description, startTime);
+      };
+      case (null) {};
+    };
+
     entry;
   };
 
-  // Calendar - Get All Calendar Entries
   public query ({ caller }) func getCalendarEntries(user : Principal) : async [CalendarEntry] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view calendar entries");
@@ -391,12 +406,11 @@ actor {
     };
     switch (calendarEntries.get(user)) {
       case (null) { [] };
-      case (?userEntries) { userEntries.toArray().sort() };
+      case (?userEntries) { userEntries.toArray() };
     };
   };
 
-  // Calendar - Update Calendar Entry
-  public shared ({ caller }) func updateCalendarEntry(entryId : Nat, title : Text, description : Text, startTime : Time.Time, endTime : ?Time.Time) : async ?CalendarEntry {
+  public shared ({ caller }) func updateCalendarEntry(entryId : Nat, title : Text, description : Text, startTime : Time.Time, endTime : ?Time.Time, recurrence : ?Recurrence, taskId : ?Nat) : async ?CalendarEntry {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can update calendar entries");
     };
@@ -406,16 +420,22 @@ actor {
       case (?existing) { existing };
     };
 
+    var updatedEntry : ?CalendarEntry = null;
+
     let updatedEntries = userEntries.map<CalendarEntry, CalendarEntry>(
       func(entry) {
         if (entry.id == entryId) {
-          {
+          let newEntry = {
             entry with
             title;
             description;
             startTime;
             endTime;
+            recurrence;
+            taskId;
           };
+          updatedEntry := ?newEntry;
+          newEntry;
         } else {
           entry;
         };
@@ -423,11 +443,22 @@ actor {
     );
 
     calendarEntries.add(caller, updatedEntries);
-    let filtered = updatedEntries.toArray().filter(func(entry) { entry.id == entryId });
-    if (filtered.size() > 0) { ?filtered[0] } else { null };
+
+    switch (updatedEntry) {
+      case (?entry) {
+        switch (entry.taskId) {
+          case (?taskId) {
+            updateTaskFromCalendarEntry(caller, entry, taskId);
+          };
+          case (null) {};
+        };
+      };
+      case (null) {};
+    };
+
+    updatedEntry;
   };
 
-  // Calendar - Delete Calendar Entry
   public shared ({ caller }) func deleteCalendarEntry(entryId : Nat) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can delete calendar entries");
@@ -438,14 +469,58 @@ actor {
       case (?existing) { existing };
     };
 
+    let deletedEntries = userEntries.filter(
+      func(entry) { entry.id == entryId }
+    ).toArray();
+
     let filteredEntries = userEntries.filter(
       func(entry) { entry.id != entryId }
     );
 
     calendarEntries.add(caller, filteredEntries);
+
+    if (deletedEntries.size() > 0) {
+      let deletedEntry = deletedEntries[0];
+      switch (deletedEntry.taskId) {
+        case (?taskId) {
+          deleteTaskFromCalendarEntry(caller, taskId);
+        };
+        case (null) {};
+      };
+    };
   };
 
-  // Budget - Create Budget Item
+  public query ({ caller }) func getRecurringEntries() : async [CalendarEntry] {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can view recurring entries");
+    };
+    
+    switch (calendarEntries.get(caller)) {
+      case (null) { [] };
+      case (?userEntries) {
+        userEntries.filter(
+          func(entry) { entry.recurrence != null }
+        ).toArray();
+      };
+    };
+  };
+
+  public shared ({ caller }) func createRecurringEntry(title : Text, description : Text, startTime : Time.Time, endTime : ?Time.Time, recurrence : Recurrence) : async CalendarEntry {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can create recurring entries");
+    };
+
+    await createCalendarEntry(title, description, startTime, endTime, ?recurrence, null);
+  };
+
+  public shared ({ caller }) func updateRecurringEntry(entryId : Nat, title : Text, description : Text, startTime : Time.Time, endTime : ?Time.Time, recurrence : Recurrence) : async ?CalendarEntry {
+    if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
+      Runtime.trap("Unauthorized: Only users can update recurring entries");
+    };
+
+    await updateCalendarEntry(entryId, title, description, startTime, endTime, ?recurrence, null);
+  };
+
   public shared ({ caller }) func createBudgetItem(amount : Nat, description : Text, date : Time.Time, itemType : BudgetItemType) : async BudgetItem {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can create budget items");
@@ -470,7 +545,6 @@ actor {
     item;
   };
 
-  // Budget - Get All Budget Items
   public query ({ caller }) func getBudgetItems(user : Principal) : async [BudgetItem] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view budget items");
@@ -480,11 +554,10 @@ actor {
     };
     switch (budgetItems.get(user)) {
       case (null) { [] };
-      case (?userItems) { userItems.toArray().sort() };
+      case (?userItems) { userItems.toArray() };
     };
   };
 
-  // Budget - Update Budget Item
   public shared ({ caller }) func updateBudgetItem(itemId : Nat, amount : Nat, description : Text, date : Time.Time, itemType : BudgetItemType) : async ?BudgetItem {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can update budget items");
@@ -516,7 +589,6 @@ actor {
     if (filtered.size() > 0) { ?filtered[0] } else { null };
   };
 
-  // Budget - Delete Budget Item
   public shared ({ caller }) func deleteBudgetItem(itemId : Nat) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can delete budget items");
@@ -534,7 +606,6 @@ actor {
     budgetItems.add(caller, filteredItems);
   };
 
-  // Crypto Portfolio - Create Entry
   public shared ({ caller }) func createCryptoEntry(symbol : Text, amount : Nat, purchasePriceCents : Nat, currentPriceCents : Nat) : async CryptoEntry {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can create crypto entries");
@@ -561,7 +632,6 @@ actor {
     entry;
   };
 
-  // Crypto Portfolio - Get All Entries
   public query ({ caller }) func getCryptoPortfolio(user : Principal) : async [CryptoEntry] {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can view crypto portfolios");
@@ -571,11 +641,10 @@ actor {
     };
     switch (cryptoPortfolios.get(user)) {
       case (null) { [] };
-      case (?userEntries) { userEntries.toArray().sort() };
+      case (?userEntries) { userEntries.toArray() };
     };
   };
 
-  // Crypto Portfolio - Update Entry
   public shared ({ caller }) func updateCryptoEntry(entryId : Nat, amount : Nat, purchasePriceCents : Nat, currentPriceCents : Nat) : async ?CryptoEntry {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can update crypto entries");
@@ -607,7 +676,6 @@ actor {
     if (filtered.size() > 0) { ?filtered[0] } else { null };
   };
 
-  // Crypto Portfolio - Delete Entry
   public shared ({ caller }) func deleteCryptoEntry(entryId : Nat) : async () {
     if (not AccessControl.hasPermission(accessControlState, caller, #user)) {
       Runtime.trap("Unauthorized: Only users can delete crypto entries");
@@ -623,5 +691,116 @@ actor {
     );
 
     cryptoPortfolios.add(caller, filteredEntries);
+  };
+
+  func addTaskToCalendar(user : Principal, task : Task, startTime : Time.Time, endTime : ?Time.Time, recurrence : ?Recurrence) {
+    let entry : CalendarEntry = {
+      id = task.id;
+      title = task.description;
+      description = task.description;
+      startTime;
+      endTime;
+      taskId = ?task.id;
+      recurrence;
+    };
+
+    let userEntries = switch (calendarEntries.get(user)) {
+      case (null) { List.empty<CalendarEntry>() };
+      case (?existing) { existing };
+    };
+
+    userEntries.add(entry);
+    calendarEntries.add(user, userEntries);
+  };
+
+  func updateTaskInCalendar(user : Principal, task : Task) {
+    let userEntries = switch (calendarEntries.get(user)) {
+      case (null) { List.empty<CalendarEntry>() };
+      case (?existing) { existing };
+    };
+
+    let updatedEntries = userEntries.map<CalendarEntry, CalendarEntry>(
+      func(entry) {
+        if (entry.taskId != null and entry.id == task.id) {
+          {
+            entry with
+            title = task.description;
+            description = task.description;
+          };
+        } else {
+          entry;
+        };
+      }
+    );
+
+    calendarEntries.add(user, updatedEntries);
+  };
+
+  func deleteTaskFromCalendar(user : Principal, taskId : Nat) {
+    let userEntries = switch (calendarEntries.get(user)) {
+      case (null) { List.empty<CalendarEntry>() };
+      case (?existing) { existing };
+    };
+
+    let filteredEntries = userEntries.filter(
+      func(entry) { not (entry.taskId != null and entry.id == taskId) }
+    );
+
+    calendarEntries.add(user, filteredEntries);
+  };
+
+  func createTaskFromCalendarEntry(user : Principal, entry : CalendarEntry, title : Text, description : Text, dueDate : Time.Time) {
+    let task : Task = {
+      id = entry.id;
+      description = title;
+      completed = false;
+      createdAt = Time.now();
+      dueDate = ?dueDate;
+      taskType = #daily;
+    };
+
+    let userTasks = switch (tasks.get(user)) {
+      case (null) { List.empty<Task>() };
+      case (?existing) { existing };
+    };
+
+    userTasks.add(task);
+    tasks.add(user, userTasks);
+  };
+
+  func updateTaskFromCalendarEntry(user : Principal, entry : CalendarEntry, taskId : Nat) {
+    let userTasks = switch (tasks.get(user)) {
+      case (null) { List.empty<Task>() };
+      case (?existing) { existing };
+    };
+
+    let updatedTasks = userTasks.map<Task, Task>(
+      func(task) {
+        if (task.id == taskId) {
+          {
+            task with
+            description = entry.title;
+            dueDate = ?entry.startTime;
+          };
+        } else {
+          task;
+        };
+      }
+    );
+
+    tasks.add(user, updatedTasks);
+  };
+
+  func deleteTaskFromCalendarEntry(user : Principal, taskId : Nat) {
+    let userTasks = switch (tasks.get(user)) {
+      case (null) { List.empty<Task>() };
+      case (?existing) { existing };
+    };
+
+    let filteredTasks = userTasks.filter(
+      func(task) { task.id != taskId }
+    );
+
+    tasks.add(user, filteredTasks);
   };
 };

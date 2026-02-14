@@ -6,8 +6,9 @@ import { useGetGoals } from '@/hooks/goals/useGoals';
 import { useGetCalendarEntries } from '@/hooks/calendar/useCalendar';
 import { useGetBudgetItems } from '@/hooks/budget/useBudget';
 import { DashboardSummaries } from '@/components/dashboard/DashboardSummaries';
-import { DashboardSummaryToggles } from '@/components/dashboard/DashboardSummaryToggles';
+import { DashboardSummarySettingsDropdown } from '@/components/dashboard/DashboardSummarySettingsDropdown';
 import { useDashboardSummaryPreferences } from '@/hooks/dashboard/useDashboardSummaryPreferences';
+import MarketSummarySection from '@/components/dashboard/MarketSummarySection';
 
 const sections = [
   {
@@ -61,18 +62,19 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back! Your everything tracker at a glance.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back! Your everything tracker at a glance.
+          </p>
+        </div>
+        <DashboardSummarySettingsDropdown
+          preferences={preferences}
+          onToggleSection={toggleSection}
+          onSetMode={setMode}
+        />
       </div>
-
-      <DashboardSummaryToggles
-        preferences={preferences}
-        onToggleSection={toggleSection}
-        onSetMode={setMode}
-      />
 
       <DashboardSummaries
         tasks={tasks}
@@ -87,6 +89,8 @@ export default function DashboardPage() {
           budget: budgetLoading,
         }}
       />
+
+      <MarketSummarySection />
 
       <div className="space-y-1">
         <h2 className="text-xl font-semibold tracking-tight">Quick Access</h2>

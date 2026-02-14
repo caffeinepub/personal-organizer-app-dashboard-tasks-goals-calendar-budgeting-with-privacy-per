@@ -25,12 +25,20 @@ export const BudgetItem = IDL.Record({
   'itemType' : BudgetItemType,
   'amount' : IDL.Nat,
 });
+export const Recurrence = IDL.Variant({
+  'monthly' : IDL.Null,
+  'yearly' : IDL.Null,
+  'daily' : IDL.Null,
+  'weekly' : IDL.Null,
+});
 export const CalendarEntry = IDL.Record({
   'id' : IDL.Nat,
   'startTime' : Time,
   'title' : IDL.Text,
   'endTime' : IDL.Opt(Time),
   'description' : IDL.Text,
+  'recurrence' : IDL.Opt(Recurrence),
+  'taskId' : IDL.Opt(IDL.Nat),
 });
 export const CryptoEntry = IDL.Record({
   'id' : IDL.Nat,
@@ -48,12 +56,25 @@ export const Goal = IDL.Record({
   'progress' : IDL.Nat,
   'targetDate' : IDL.Opt(Time),
 });
+export const DayOfWeek = IDL.Variant({
+  'tuesday' : IDL.Null,
+  'wednesday' : IDL.Null,
+  'thursday' : IDL.Null,
+  'friday' : IDL.Null,
+  'monday' : IDL.Null,
+});
+export const TaskType = IDL.Variant({
+  'weekend' : IDL.Null,
+  'dayOfWeek' : DayOfWeek,
+  'daily' : IDL.Null,
+});
 export const Task = IDL.Record({
   'id' : IDL.Nat,
   'createdAt' : Time,
   'completed' : IDL.Bool,
   'dueDate' : IDL.Opt(Time),
   'description' : IDL.Text,
+  'taskType' : TaskType,
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 
@@ -66,7 +87,14 @@ export const idlService = IDL.Service({
       [],
     ),
   'createCalendarEntry' : IDL.Func(
-      [IDL.Text, IDL.Text, Time, IDL.Opt(Time)],
+      [
+        IDL.Text,
+        IDL.Text,
+        Time,
+        IDL.Opt(Time),
+        IDL.Opt(Recurrence),
+        IDL.Opt(IDL.Nat),
+      ],
       [CalendarEntry],
       [],
     ),
@@ -76,7 +104,12 @@ export const idlService = IDL.Service({
       [],
     ),
   'createGoal' : IDL.Func([IDL.Text, IDL.Text, IDL.Opt(Time)], [Goal], []),
-  'createTask' : IDL.Func([IDL.Text, IDL.Opt(Time)], [Task], []),
+  'createRecurringEntry' : IDL.Func(
+      [IDL.Text, IDL.Text, Time, IDL.Opt(Time), Recurrence],
+      [CalendarEntry],
+      [],
+    ),
+  'createTask' : IDL.Func([IDL.Text, IDL.Opt(Time), TaskType], [Task], []),
   'deleteBudgetItem' : IDL.Func([IDL.Nat], [], []),
   'deleteCalendarEntry' : IDL.Func([IDL.Nat], [], []),
   'deleteCryptoEntry' : IDL.Func([IDL.Nat], [], []),
@@ -100,6 +133,7 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getGoals' : IDL.Func([IDL.Principal], [IDL.Vec(Goal)], ['query']),
+  'getRecurringEntries' : IDL.Func([], [IDL.Vec(CalendarEntry)], ['query']),
   'getTasks' : IDL.Func([IDL.Principal], [IDL.Vec(Task)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
@@ -115,7 +149,15 @@ export const idlService = IDL.Service({
       [],
     ),
   'updateCalendarEntry' : IDL.Func(
-      [IDL.Nat, IDL.Text, IDL.Text, Time, IDL.Opt(Time)],
+      [
+        IDL.Nat,
+        IDL.Text,
+        IDL.Text,
+        Time,
+        IDL.Opt(Time),
+        IDL.Opt(Recurrence),
+        IDL.Opt(IDL.Nat),
+      ],
       [IDL.Opt(CalendarEntry)],
       [],
     ),
@@ -130,8 +172,13 @@ export const idlService = IDL.Service({
       [],
     ),
   'updateGoalProgress' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Opt(Goal)], []),
+  'updateRecurringEntry' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Text, Time, IDL.Opt(Time), Recurrence],
+      [IDL.Opt(CalendarEntry)],
+      [],
+    ),
   'updateTask' : IDL.Func(
-      [IDL.Nat, IDL.Text, IDL.Opt(Time)],
+      [IDL.Nat, IDL.Text, IDL.Opt(Time), TaskType],
       [IDL.Opt(Task)],
       [],
     ),
@@ -157,12 +204,20 @@ export const idlFactory = ({ IDL }) => {
     'itemType' : BudgetItemType,
     'amount' : IDL.Nat,
   });
+  const Recurrence = IDL.Variant({
+    'monthly' : IDL.Null,
+    'yearly' : IDL.Null,
+    'daily' : IDL.Null,
+    'weekly' : IDL.Null,
+  });
   const CalendarEntry = IDL.Record({
     'id' : IDL.Nat,
     'startTime' : Time,
     'title' : IDL.Text,
     'endTime' : IDL.Opt(Time),
     'description' : IDL.Text,
+    'recurrence' : IDL.Opt(Recurrence),
+    'taskId' : IDL.Opt(IDL.Nat),
   });
   const CryptoEntry = IDL.Record({
     'id' : IDL.Nat,
@@ -180,12 +235,25 @@ export const idlFactory = ({ IDL }) => {
     'progress' : IDL.Nat,
     'targetDate' : IDL.Opt(Time),
   });
+  const DayOfWeek = IDL.Variant({
+    'tuesday' : IDL.Null,
+    'wednesday' : IDL.Null,
+    'thursday' : IDL.Null,
+    'friday' : IDL.Null,
+    'monday' : IDL.Null,
+  });
+  const TaskType = IDL.Variant({
+    'weekend' : IDL.Null,
+    'dayOfWeek' : DayOfWeek,
+    'daily' : IDL.Null,
+  });
   const Task = IDL.Record({
     'id' : IDL.Nat,
     'createdAt' : Time,
     'completed' : IDL.Bool,
     'dueDate' : IDL.Opt(Time),
     'description' : IDL.Text,
+    'taskType' : TaskType,
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
   
@@ -198,7 +266,14 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'createCalendarEntry' : IDL.Func(
-        [IDL.Text, IDL.Text, Time, IDL.Opt(Time)],
+        [
+          IDL.Text,
+          IDL.Text,
+          Time,
+          IDL.Opt(Time),
+          IDL.Opt(Recurrence),
+          IDL.Opt(IDL.Nat),
+        ],
         [CalendarEntry],
         [],
       ),
@@ -208,7 +283,12 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'createGoal' : IDL.Func([IDL.Text, IDL.Text, IDL.Opt(Time)], [Goal], []),
-    'createTask' : IDL.Func([IDL.Text, IDL.Opt(Time)], [Task], []),
+    'createRecurringEntry' : IDL.Func(
+        [IDL.Text, IDL.Text, Time, IDL.Opt(Time), Recurrence],
+        [CalendarEntry],
+        [],
+      ),
+    'createTask' : IDL.Func([IDL.Text, IDL.Opt(Time), TaskType], [Task], []),
     'deleteBudgetItem' : IDL.Func([IDL.Nat], [], []),
     'deleteCalendarEntry' : IDL.Func([IDL.Nat], [], []),
     'deleteCryptoEntry' : IDL.Func([IDL.Nat], [], []),
@@ -232,6 +312,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getGoals' : IDL.Func([IDL.Principal], [IDL.Vec(Goal)], ['query']),
+    'getRecurringEntries' : IDL.Func([], [IDL.Vec(CalendarEntry)], ['query']),
     'getTasks' : IDL.Func([IDL.Principal], [IDL.Vec(Task)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
@@ -247,7 +328,15 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'updateCalendarEntry' : IDL.Func(
-        [IDL.Nat, IDL.Text, IDL.Text, Time, IDL.Opt(Time)],
+        [
+          IDL.Nat,
+          IDL.Text,
+          IDL.Text,
+          Time,
+          IDL.Opt(Time),
+          IDL.Opt(Recurrence),
+          IDL.Opt(IDL.Nat),
+        ],
         [IDL.Opt(CalendarEntry)],
         [],
       ),
@@ -262,8 +351,13 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'updateGoalProgress' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Opt(Goal)], []),
+    'updateRecurringEntry' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Text, Time, IDL.Opt(Time), Recurrence],
+        [IDL.Opt(CalendarEntry)],
+        [],
+      ),
     'updateTask' : IDL.Func(
-        [IDL.Nat, IDL.Text, IDL.Opt(Time)],
+        [IDL.Nat, IDL.Text, IDL.Opt(Time), TaskType],
         [IDL.Opt(Task)],
         [],
       ),

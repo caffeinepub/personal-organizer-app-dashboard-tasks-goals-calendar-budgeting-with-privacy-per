@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGetTasks } from '@/hooks/tasks/useTasks';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import TaskList from '@/components/tasks/TaskList';
+import TaskSectionedList from '@/components/tasks/TaskSectionedList';
 import TaskFormDialog from '@/components/tasks/TaskFormDialog';
 import IntegrityWarningBanner from '@/components/common/IntegrityWarningBanner';
 import SecurityNote from '@/components/common/SecurityNote';
@@ -32,7 +32,7 @@ export default function TasksPage() {
 
       <SecurityNote />
 
-      <TaskList tasks={tasks} isLoading={isLoading} />
+      <TaskSectionedList tasks={tasks} isLoading={isLoading} />
 
       <TaskFormDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
