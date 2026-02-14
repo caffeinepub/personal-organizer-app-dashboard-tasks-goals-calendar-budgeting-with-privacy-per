@@ -1,0 +1,239 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 7,
+  "summary": "Shift toward a “mobile everything tracker” personal organizer with a more friendly, app-like UI (Apple Settings-style toggles), explicit in-app security/privacy visibility, and additional tracking areas (e.g., Crypto) with per-section theming.",
+  "architectural_notes": [
+    "Privacy/security requirement: safeguard all user entry information using SHA-256 per app silo to prevent information collection on the individual.",
+    "Add UI-level session security state detection to drive a persistent privacy indicator (secure vs insecure session) without exposing sensitive data.",
+    "Adopt a mobile-first design system with Settings-style toggle components and allow per-section theming (e.g., Crypto/To-Do).",
+    "Add seeded/example content per section (2–3 examples) that is clearly marked as sample data and does not compromise privacy."
+  ],
+  "known_issues": [
+    "App reported as “no longer loading” (needs investigation/regression fix)."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "feature-create-a-central-dashboard-page-that-lets-a-signed-in-user-choose-between-tasks-goals-calendar-and-budget-sections-of-the-app",
+      "title": "Create a central dashboard page that lets a signed-in user choose between Tasks, Goals, Calendar, and Budget sections of the app.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-tasks-management-for-each-signed-in-user-create-list-update-complete-uncomplete-and-delete-tasks",
+      "title": "Implement Tasks management for each signed-in user: create, list, update, complete/uncomplete, and delete tasks.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-goals-tracking-for-each-signed-in-user-create-list-update-and-delete-goals-including-optional-target-date-and-progress-status",
+      "title": "Implement Goals tracking for each signed-in user: create, list, update, and delete goals, including optional target date and progress/status.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-calendar-tracking-for-each-signed-in-user-create-list-update-and-delete-calendar-entries-events-reminders-with-date-time-support",
+      "title": "Implement Calendar tracking for each signed-in user: create, list, update, and delete calendar entries (events/reminders) with date/time support.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-budget-tracking-for-each-signed-in-user-create-list-update-and-delete-income-expense-items-and-show-basic-summaries-e-g-totals-by-month-and-net-total",
+      "title": "Implement Budget tracking for each signed-in user: create, list, update, and delete income/expense items and show basic summaries (e.g., totals by month and net total).",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-safeguard-user-entered-information-using-sha-256-per-app-silo-for-every-stored-user-entry-task-goal-calendar-item-budget-item-compute-and-store-a-sha-256-digest-using-a-per-user-per-silo-salt-so-the-backend-can-store-and-return-integrity-checked-data-without-exposing-raw-content-through-logging-debug-or-cross-user-access",
+      "title": "Safeguard user-entered information using SHA-256 per app silo: for every stored user entry (task, goal, calendar item, budget item), compute and store a SHA-256 digest using a per-user/per-silo salt so the backend can store and return integrity-checked data without exposing raw content through logging/debug or cross-user access.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-define-and-apply-a-coherent-visual-theme-across-the-app-layout-typography-spacing-and-component-styling-appropriate-for-a-personal-productivity-organizer",
+      "title": "Define and apply a coherent visual theme across the app (layout, typography, spacing, and component styling) appropriate for a personal productivity organizer.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-generated-static-image-assets-logo-section-icons-to-the-frontend-and-render-them-in-the-ui-dashboard-header",
+      "title": "Add generated static image assets (logo + section icons) to the frontend and render them in the UI (dashboard + header).",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-dashboard-page-frontend-src-pages-dashboardpage-tsx-to-include-richer-at-a-glance-summaries-for-tasks-goals-calendar-and-budget-in-addition-to-the-existing-navigation-cards",
+      "title": "Update the Dashboard page (frontend/src/pages/DashboardPage.tsx) to include richer, at-a-glance summaries for Tasks, Goals, Calendar, and Budget in addition to the existing navigation cards.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-toggle-controls-on-the-dashboard-that-let-the-user-switch-what-summaries-are-shown-e-g-show-hide-each-section-s-summary-and-or-toggle-between-summary-modes-such-as-stats-vs-recent-per-section",
+      "title": "Add toggle controls on the dashboard that let the user switch what summaries are shown (e.g., show/hide each section’s summary and/or toggle between summary modes such as 'Stats' vs 'Recent' per section).",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-the-dashboard-summaries-to-the-existing-react-query-data-sources-by-fetching-the-signed-in-user-s-tasks-goals-calendar-entries-and-budget-items-using-the-existing-hooks-and-compute-summary-values-client-side-for-display-on-the-dashboard",
+      "title": "Wire the dashboard summaries to the existing React Query data sources by fetching the signed-in user’s tasks, goals, calendar entries, and budget items using the existing hooks, and compute summary values client-side for display on the dashboard.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-regression-where-the-app-is-no-longer-loading-by-identifying-and-resolving-the-runtime-build-error-s-so-the-initial-route-renders-successfully-and-navigation-to-existing-sections-dashboard-tasks-goals-calendar-budget-works-without-a-blank-screen-or-crash",
+      "title": "Fix the regression where the app is \"no longer loading\" by identifying and resolving the runtime/build error(s) so the initial route renders successfully and navigation to existing sections (Dashboard, Tasks, Goals, Calendar, Budget) works without a blank screen or crash.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-persistent-privacy-confirmed-live-status-indicator-bar-with-a-video-game-themed-look-that-is-purple-when-the-user-is-securely-logged-in-and-flashes-turns-red-when-the-session-is-not-secure-e-g-user-is-not-authenticated",
+      "title": "Add a persistent \"privacy confirmed\" live status indicator bar with a video game themed look that is purple when the user is securely logged in, and flashes/turns red when the session is not secure (e.g., user is not authenticated).",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-redesign-the-global-ui-theme-to-a-mobile-first-everything-tracker-experience-that-feels-fun-helpful-and-easy-to-use-with-apple-settings-style-toggle-boxes-panels-for-preferences-and-settings-like-controls-across-the-app",
+      "title": "Redesign the global UI theme to a mobile-first “everything tracker” experience that feels fun, helpful, and easy to use, with Apple Settings–style toggle boxes/panels for preferences and settings-like controls across the app.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-security-encryption-visibility-explicit-in-the-ui-by-adding-clear-friendly-copy-near-data-entry-areas-indicating-that-entries-are-protected-with-encryption-integrity-safeguards-without-claiming-any-third-party-certification-or-external-security-service",
+      "title": "Make security/encryption visibility explicit in the UI by adding clear, friendly copy near data entry areas indicating that entries are protected with encryption/integrity safeguards, without claiming any third-party certification or external security service.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-2-3-in-app-example-entries-templates-in-each-organizer-section-tasks-goals-calendar-budget-and-crypto-to-guide-users-on-what-information-best-pertains-to-each-area-shown-as-examples-when-the-user-has-no-items-yet-and-or-as-quick-add-suggestions",
+      "title": "Provide 2–3 in-app example entries/templates in each organizer section (Tasks, Goals, Calendar, Budget, and Crypto) to guide users on what information best pertains to each area, shown as examples when the user has no items yet and/or as quick-add suggestions.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-new-crypto-section-to-the-app-including-navigation-access-a-dedicated-page-and-basic-per-user-crud-tracking-for-crypto-entries-with-a-ui-theme-resembling-coinbase-visual-style-only-no-external-api-integration",
+      "title": "Add a new \"Crypto\" section to the app, including navigation access, a dedicated page, and basic per-user CRUD tracking for crypto entries, with a UI theme resembling Coinbase (visual style only; no external API integration).",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-per-section-theming-so-that-the-tasks-to-do-list-section-resembles-a-sports-related-paper-scroll-private-theme-while-still-matching-the-app-s-overall-mobile-first-tracker-design-and-not-harming-readability",
+      "title": "Apply per-section theming so that the Tasks (to-do list) section resembles a sports-related / paper scroll / private theme, while still matching the app’s overall mobile-first tracker design and not harming readability.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Dashboard to navigate key areas (tasks, goals, calendar tracking, budget)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Task management feature for organizing a person's tasks",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Goals tracking feature for organizing a person's goals",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Calendar tracking feature",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Budget tracking feature",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Safeguard user-entered information using SHA-256 per app silo to prevent individual information collection",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Enhance dashboard to show richer per-section summaries with toggle controls",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Add a persistent privacy/security live status indicator bar (purple when session is secure/logged in; flashes and turns red when session is not secured) with a video-game themed style",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Redesign UI theme to a fun, helpful, mobile-first “everything tracker” look with Apple Settings-style toggle boxes and improved usability",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-10",
+      "summary": "Provide 2–3 in-app example entries/templates in each organizer section to guide users on what information to enter",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-11",
+      "summary": "Add a Crypto tracking section with a UI theme resembling Coinbase",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Apply per-section theming, including a sports/paper-scroll/private theme for the To-Do list section",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Personal organizer app: dashboard + tasks, goals, calendar, budgeting with privacy (per-user silo + SHA-256)",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --radius: 12px;
+        --background: 0.98 0.01 270;
+        --foreground: 0.20 0.02 270;
+        --card: 1 0 0;
+        --card-foreground: 0.20 0.02 270;
+        --popover: 1 0 0;
+        --popover-foreground: 0.20 0.02 270;
+        --primary: 0.55 0.18 280;
+        --primary-foreground: 0.98 0.01 270;
+        --secondary: 0.92 0.03 270;
+        --secondary-foreground: 0.20 0.02 270;
+        --muted: 0.95 0.02 270;
+        --muted-foreground: 0.50 0.03 270;
+        --accent: 0.92 0.03 270;
+        --accent-foreground: 0.20 0.02 270;
+        --destructive: 0.55 0.22 25;
+        --destructive-foreground: 0.98 0.01 270;
+        --border: 0.90 0.02 270;
+        --input: 0.90 0.02 270;
+        --ring: 0.55 0.18 280;
+        --chart-1: 0.60 0.15 280;
+        --chart-2: 0.65 0.15 200;
+        --chart-3: 0.60 0.12 320;
+        --chart-4: 0.68 0.18 160;
+        --chart-5: 0.58 0.20 40;
+        --sidebar: 0.98 0.01 270;
+        --sidebar-foreground: 0.20 0.02 270;
+        --sidebar-primary: 0.55 0.18 280;
+        --sidebar-primary-foreground: 0.98 0.01 270;
+        --sidebar-accent: 0.92 0.03 270;
+        --sidebar-accent-foreground: 0.20 0.02 270;
+        --sidebar-border: 0.90 0.02 270;
+        --sidebar-ring: 0.55 0.18 280;
+        
+        --secure-status: 0.60 0.20 280;
+        --insecure-status: 0.55 0.25 15;
+        --crypto-accent: 0.50 0.15 220;
+    }
+
+    .dark {
+        --background: 0.15 0.02 270;
+        --foreground: 0.95 0.01 270;
+        --card: 0.18 0.02 270;
+        --card-foreground: 0.95 0.01 270;
+        --popover: 0.16 0.02 270;
+        --popover-foreground: 0.95 0.01 270;
+        --primary: 0.65 0.18 280;
+        --primary-foreground: 0.15 0.02 270;
+        --secondary: 0.25 0.03 270;
+        --secondary-foreground: 0.95 0.01 270;
+        --muted: 0.22 0.02 270;
+        --muted-foreground: 0.60 0.03 270;
+        --accent: 0.28 0.03 270;
+        --accent-foreground: 0.95 0.01 270;
+        --destructive: 0.50 0.22 20;
+        --destructive-foreground: 0.95 0.01 270;
+        --border: 0.25 0.02 270;
+        --input: 0.25 0.02 270;
+        --ring: 0.65 0.18 280;
+        --chart-1: 0.60 0.15 280;
+        --chart-2: 0.65 0.15 200;
+        --chart-3: 0.60 0.12 320;
+        --chart-4: 0.68 0.18 160;
+        --chart-5: 0.58 0.20 40;
+        --sidebar: 0.16 0.02 270;
+        --sidebar-foreground: 0.95 0.01 270;
+        --sidebar-primary: 0.65 0.18 280;
+        --sidebar-primary-foreground: 0.15 0.02 270;
+        --sidebar-accent: 0.25 0.03 270;
+        --sidebar-accent-foreground: 0.95 0.01 270;
+        --sidebar-border: 0.25 0.02 270;
+        --sidebar-ring: 0.65 0.18 280;
+        
+        --secure-status: 0.65 0.20 280;
+        --insecure-status: 0.60 0.25 15;
+        --crypto-accent: 0.55 0.15 220;
+    }
+
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+}
+
+@layer components {
+    /* Privacy Status Bar */
+    .privacy-status-bar {
+        @apply w-full text-center font-medium relative overflow-hidden;
+        background: linear-gradient(90deg, transparent 0%, oklch(var(--secure-status) / 0.1) 50%, transparent 100%);
+        border-bottom: 2px solid oklch(var(--secure-status));
+    }
+    
+    .privacy-status-secure {
+        @apply text-white;
+        background: oklch(var(--secure-status));
+        border-bottom-color: oklch(var(--secure-status));
+        box-shadow: 0 0 20px oklch(var(--secure-status) / 0.3), inset 0 1px 0 oklch(var(--secure-status) / 0.5);
+        animation: scanline 3s linear infinite;
+    }
+    
+    .privacy-status-insecure {
+        @apply text-white;
+        background: oklch(var(--insecure-status));
+        border-bottom-color: oklch(var(--insecure-status));
+        animation: pulse-red 1.5s ease-in-out infinite;
+    }
+
+    /* Settings-style components (Apple-inspired) */
+    .settings-card {
+        @apply rounded-xl border border-border bg-card shadow-xs;
+    }
+    
+    .settings-group {
+        @apply divide-y divide-border rounded-lg border border-border bg-card;
+    }
+    
+    .settings-group-item {
+        @apply px-4 py-3 first:rounded-t-lg last:rounded-b-lg hover:bg-accent/5 transition-colors;
+    }
+    
+    .settings-nav-item {
+        @apply px-3 py-2 text-sm font-medium rounded-lg hover:bg-accent/80 hover:text-accent-foreground transition-all;
+    }
+    
+    .settings-nav-item-active {
+        @apply bg-accent text-accent-foreground;
+    }
+
+    /* Security Note */
+    .security-note {
+        @apply border-primary/20 bg-primary/5;
+    }
+
+    /* Tasks Theme (Sports + Paper Scroll + Private) */
+    .tasks-theme {
+        position: relative;
+    }
+    
+    .tasks-theme::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            linear-gradient(180deg, transparent 0%, oklch(var(--background)) 100%),
+            repeating-linear-gradient(0deg, oklch(var(--muted) / 0.03) 0px, transparent 1px, transparent 2px, oklch(var(--muted) / 0.03) 3px);
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    .tasks-theme > * {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .tasks-card {
+        @apply rounded-lg border-2 border-border bg-card shadow-sm;
+        background: linear-gradient(to bottom, oklch(var(--card)), oklch(var(--card) / 0.98));
+    }
+
+    /* Crypto Theme (Coinbase-inspired) */
+    .crypto-theme {
+        @apply space-y-5;
+    }
+    
+    .crypto-card {
+        @apply rounded-2xl border border-border bg-card shadow-sm;
+        background: linear-gradient(135deg, oklch(var(--card)), oklch(var(--card) / 0.95));
+    }
+    
+    .crypto-button {
+        @apply bg-gradient-to-r from-primary to-crypto-accent hover:opacity-90 transition-opacity;
+        background: linear-gradient(135deg, oklch(var(--primary)), oklch(var(--crypto-accent)));
+    }
+}
+
+@layer utilities {
+    @keyframes scanline {
+        0% {
+            background-position: 0% 0%;
+        }
+        100% {
+            background-position: 100% 0%;
+        }
+    }
+    
+    @keyframes pulse-red {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 20px oklch(var(--insecure-status) / 0.5);
+        }
+        50% {
+            opacity: 0.85;
+            box-shadow: 0 0 30px oklch(var(--insecure-status) / 0.7);
+        }
+    }
+}

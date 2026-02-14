@@ -1,0 +1,284 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Everything Tracker mobile theme refresh, security status bar, examples, Crypto section, and loading regression fix (frontend-only)",
+  "requirements": [
+    {
+      "id": "REQ-12",
+      "summary": "Fix the frontend regression causing a blank screen/crash so the app renders the initial route and existing navigation works reliably without infinite loading during auth/profile initialization.",
+      "acceptanceCriteria": [
+        "App loads to the Dashboard route without a blank screen or uncaught exception in the browser console",
+        "Unauthenticated users see the login screen; authenticated users can navigate to Dashboard/Tasks/Goals/Calendar/Budget",
+        "No infinite loading state occurs during Internet Identity initialization or profile fetching"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add router-level error handling (e.g., an error component/fallback view) so runtime errors don't result in a blank screen, and ensure all existing routes render through the authenticated shell without crashes."
+        },
+        {
+          "path": "frontend/src/components/auth/RequireAuth.tsx",
+          "operation": "modify",
+          "description": "Harden initialization/loading behavior to avoid infinite spinners (e.g., add a user-visible fallback state and safe retry guidance when Internet Identity or profile fetching hangs) while keeping unauthenticated users on the login screen. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/layout/AppShell.tsx",
+          "operation": "modify",
+          "description": "Remove/guard any unsafe direct browser-global usage during render (e.g., protect window access) and ensure shell layout consistently renders the routed content and navigation without runtime exceptions. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "summary": "Add a persistent, video game themed “privacy confirmed” live status indicator bar that is purple when authenticated and flashing red when not authenticated.",
+      "acceptanceCriteria": [
+        "A status bar is visible in the app shell on all routes (including the login screen)",
+        "When the user is authenticated (Internet Identity identity present), the bar displays a purple \"secure\" state with clear English text (e.g., \"Secure session\" / \"Privacy confirmed\")",
+        "When the user is not authenticated, the bar displays a red state and uses a flashing/pulsing animation to indicate \"not secure\"",
+        "The bar styling reads as \"video game themed\" (e.g., scanlines/glow/pixel-like accents) while remaining legible and accessible"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/common/PrivacyStatusBar.tsx",
+          "operation": "create",
+          "description": "Create a persistent status bar component that reads auth state from Internet Identity and renders purple “Privacy confirmed / Secure session” when authenticated and a flashing red “Not secure” state when not authenticated. Use shadcn-ui primitives (e.g., Card/Badge) where helpful for consistent styling. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/layout/AppShell.tsx",
+          "operation": "modify",
+          "description": "Wire PrivacyStatusBar into the app shell so it appears on all routes, including the login screen, and stays pinned/visible in a mobile-first layout. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add global styles/utility classes for the status bar’s “video game themed” look (scanline/glow accents) and a pulsing/flashing animation for the insecure state, keeping text legible and accessible."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Extend Tailwind theme with any required keyframes/animations (e.g., pulse/scanline) and token colors for the status bar secure/insecure states."
+        }
+      ]
+    },
+    {
+      "id": "REQ-14",
+      "summary": "Refresh the global UI to a mobile-first “everything tracker” theme with Apple Settings–style grouped panels and toggle-box controls applied consistently across sections.",
+      "acceptanceCriteria": [
+        "Layout and spacing are optimized for mobile first (comfortable touch targets, clear section headers, consistent card/panel spacing) while still looking good on desktop",
+        "Settings-like toggle UI is used where applicable (e.g., dashboard summary toggles) with an Apple Settings–inspired grouped-panel aesthetic",
+        "Theme changes are applied consistently across Dashboard, Tasks, Goals, Calendar, Budget pages (typography, card styles, borders, backgrounds, focus states)",
+        "User-facing text remains in English and is clear and friendly"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Adjust theme CSS variables and base styles for a friendly mobile-first tracker feel (panels/cards, spacing, focus rings) and add reusable “settings group” panel classes inspired by Apple Settings."
+        },
+        {
+          "path": "frontend/src/components/layout/AppShell.tsx",
+          "operation": "modify",
+          "description": "Refine the shell layout for mobile-first ergonomics (consistent padding, header density, navigation touch targets) while preserving existing routing and auth behavior. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/dashboard/DashboardSummaryToggles.tsx",
+          "operation": "modify",
+          "description": "Restyle the summary settings panel to look like Apple Settings grouped toggle boxes using shadcn-ui components (Card, Switch, Select) and new “settings group” classes. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/DashboardPage.tsx",
+          "operation": "modify",
+          "description": "Update Dashboard page typography, spacing, and cards to match the new mobile-first tracker theme while keeping all content in English and maintaining existing quick access navigation."
+        },
+        {
+          "path": "frontend/src/pages/TasksPage.tsx",
+          "operation": "modify",
+          "description": "Apply consistent mobile-first spacing and panel styling on Tasks, ensuring existing interactions remain unchanged. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/GoalsPage.tsx",
+          "operation": "modify",
+          "description": "Apply consistent mobile-first spacing and panel styling on Goals, ensuring existing interactions remain unchanged. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CalendarPage.tsx",
+          "operation": "modify",
+          "description": "Apply consistent mobile-first spacing and panel styling on Calendar, ensuring existing interactions remain unchanged. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/BudgetPage.tsx",
+          "operation": "modify",
+          "description": "Apply consistent mobile-first spacing and panel styling on Budget (table/card surfaces), ensuring existing interactions remain unchanged. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-15",
+      "summary": "Add clear, friendly security/encryption visibility copy near primary data-entry areas in each organizer section without unverifiable claims.",
+      "acceptanceCriteria": [
+        "Each organizer section (Tasks, Goals, Calendar, Budget, and the new Crypto section) includes a short, friendly security note in English near the primary entry list/form area",
+        "Copy is non-misleading and avoids unverifiable claims; it communicates that the app protects user entries and that secure login is required",
+        "Security messaging does not block normal usage and remains visually secondary to primary actions"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/common/SecurityNote.tsx",
+          "operation": "create",
+          "description": "Create a small, visually-secondary note component with friendly English copy indicating entries are protected with encryption/integrity safeguards and that secure login is required (no third-party/certification claims). Use shadcn-ui typography primitives or Card/Alert styling if appropriate. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/TasksPage.tsx",
+          "operation": "modify",
+          "description": "Place SecurityNote near the primary task list/add area so it’s visible during data entry without blocking usage. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/GoalsPage.tsx",
+          "operation": "modify",
+          "description": "Place SecurityNote near the primary goals list/add area so it’s visible during data entry without blocking usage. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CalendarPage.tsx",
+          "operation": "modify",
+          "description": "Place SecurityNote near the primary calendar list/add area so it’s visible during data entry without blocking usage. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/BudgetPage.tsx",
+          "operation": "modify",
+          "description": "Place SecurityNote near the primary budget list/add area so it’s visible during data entry without blocking usage. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CryptoPage.tsx",
+          "operation": "create",
+          "description": "Add SecurityNote near the primary crypto positions list/form area on the new Crypto page. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-16",
+      "summary": "Add 2–3 in-app example entries/templates per section (Tasks, Goals, Calendar, Budget, Crypto) shown in empty states and/or as quick-add suggestions.",
+      "acceptanceCriteria": [
+        "When a section has zero items, the empty state includes 2–3 example suggestions written in English and tailored to that section",
+        "Examples are clearly labeled as examples/templates and are not confused with user data",
+        "Optionally (if implemented), the user can click an example to prefill the add dialog; otherwise examples are purely informational",
+        "Examples exist for Tasks, Goals, Calendar, Budget, and Crypto"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/common/SectionExamples.tsx",
+          "operation": "create",
+          "description": "Create a reusable examples/templates block that accepts a section label and renders 2–3 tailored English example items, clearly labeled as “Examples” or “Templates”, styled as secondary guidance. Use shadcn-ui components (Card, Badge, Button) if needed. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/tasks/TaskList.tsx",
+          "operation": "modify",
+          "description": "Enhance the zero-items empty state to include the Tasks examples/templates block (sports/private themed copy) while keeping examples clearly distinct from user data. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/goals/GoalList.tsx",
+          "operation": "modify",
+          "description": "Enhance the zero-items empty state to include Goals examples/templates guidance. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/calendar/CalendarEntryList.tsx",
+          "operation": "modify",
+          "description": "Enhance the zero-items empty state to include Calendar examples/templates guidance. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/BudgetPage.tsx",
+          "operation": "modify",
+          "description": "Enhance the Budget empty state (when no transactions) to include Budget examples/templates guidance, clearly labeled as examples. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/crypto/CryptoEntryList.tsx",
+          "operation": "create",
+          "description": "Create a crypto positions list component that includes an empty state with 2–3 Crypto examples/templates guidance (e.g., common assets/notes) clearly labeled as examples. Use shadcn-ui table/cards as appropriate. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CryptoPage.tsx",
+          "operation": "create",
+          "description": "Wire the crypto empty state examples/templates via the crypto list component when the user has zero crypto entries. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-17",
+      "summary": "Add a new authenticated Crypto section with navigation, a dedicated page, and per-user CRUD tracking using existing backend capabilities; style the UI with a Coinbase-like visual feel (style only).",
+      "acceptanceCriteria": [
+        "A new nav item and route (e.g., /crypto) is available for authenticated users and visible in the app shell navigation",
+        "Crypto page supports creating, listing, editing, and deleting crypto entries scoped to the signed-in user",
+        "Crypto page includes a simple summary area (e.g., total positions count and/or grouped by asset) computed client-side",
+        "Crypto UI uses a Coinbase-like visual feel (clean finance-app surfaces, restrained palette, clear typography) while staying consistent with the app’s overall design system",
+        "No Coinbase APIs or third-party crypto price feeds are used"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/crypto/useCrypto.ts",
+          "operation": "create",
+          "description": "Add React Query hooks to fetch and mutate crypto entries via the existing backend interface (list/create/update/delete) scoped to the authenticated principal; mirror existing section hook patterns for consistency."
+        },
+        {
+          "path": "frontend/src/components/crypto/CryptoEntryFormDialog.tsx",
+          "operation": "create",
+          "description": "Create a dialog form component for creating/editing crypto entries (symbol, amount, purchase price, current price) using shadcn-ui Dialog/Input/Select/Button patterns consistent with other sections. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/crypto/CryptoEntryList.tsx",
+          "operation": "create",
+          "description": "Create a crypto entry list with edit/delete actions and loading/empty states, using shadcn-ui Card/Table/Button patterns for a clean Coinbase-like surface feel. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/crypto/CryptoSummary.tsx",
+          "operation": "create",
+          "description": "Create a simple client-side computed summary (e.g., total positions count and grouped counts by symbol) displayed in clean finance-style cards consistent with the app theme. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/CryptoPage.tsx",
+          "operation": "create",
+          "description": "Create the authenticated Crypto page that composes CryptoSummary, CryptoEntryList, and CryptoEntryFormDialog; apply Coinbase-like visual styling (restrained palette, clean typography) without any external API integrations. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Register the new /crypto route in the router and ensure it is protected via the existing RequireAuth flow (no new auth system)."
+        },
+        {
+          "path": "frontend/src/components/layout/AppShell.tsx",
+          "operation": "modify",
+          "description": "Add a Crypto nav link visible to authenticated users in both desktop and mobile navigation. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add per-section styling utilities for the Crypto page to achieve a Coinbase-like look (clean finance surfaces, subtle borders, restrained accent colors) while staying consistent with the global design system."
+        }
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "summary": "Apply distinct per-section theming for Tasks to evoke a sports + paper scroll + private feel without impacting other sections or breaking interactions.",
+      "acceptanceCriteria": [
+        "Tasks page (and key task components) has distinct visual styling evoking a sports + paper-scroll + private feel (e.g., textured background effect via CSS, badge styling, header treatment)",
+        "Theming remains accessible (sufficient contrast, readable fonts) and does not break existing interactions (add/edit/complete/delete)",
+        "Other sections retain their own appropriate styling and do not inherit the Tasks-specific look unintentionally"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Add scoped CSS classes for the Tasks section theme (paper-scroll texture effect, sports/private accents) ensuring styles only apply within a Tasks-specific wrapper class and meet accessibility contrast requirements."
+        },
+        {
+          "path": "frontend/src/pages/TasksPage.tsx",
+          "operation": "modify",
+          "description": "Wrap Tasks content in a Tasks-theme container class and adjust header/panel styling to match the sports + paper scroll + private vibe while preserving existing CRUD interactions. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/tasks/TaskList.tsx",
+          "operation": "modify",
+          "description": "Adjust task card visuals (within the scoped Tasks theme) to match the section styling without altering behavior (toggle/edit/delete). Use shadcn-ui Card/Button/Checkbox as-is (compose only). Verify the component's usage instructions before implementing."
+        }
+      ]
+    }
+  ]
+}

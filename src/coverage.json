@@ -1,0 +1,194 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-14T20:53:11.094Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 7,
+    "implemented": 7,
+    "items": [
+      {
+        "id": "REQ-12",
+        "summary": "Fix the regression where the app is \"no longer loading\" by identifying and resolving the runtime/build error(s) so the initial route renders successfully and navigation to existing sections (Dashboard, Tasks, Goals, Calendar, Budget) works without a blank screen or crash.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/components/auth/RequireAuth.tsx",
+          "frontend/src/components/layout/AppShell.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/App.tsx",
+          "frontend/src/components/auth/RequireAuth.tsx",
+          "frontend/src/components/layout/AppShell.tsx"
+        ]
+      },
+      {
+        "id": "REQ-13",
+        "summary": "Add a persistent \"privacy confirmed\" live status indicator bar with a video game themed look that is purple when the user is securely logged in, and flashes/turns red when the session is not secure (e.g., user is not authenticated).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/common/PrivacyStatusBar.tsx",
+          "frontend/src/components/layout/AppShell.tsx",
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/common/PrivacyStatusBar.tsx",
+          "frontend/src/components/layout/AppShell.tsx",
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js"
+        ]
+      },
+      {
+        "id": "REQ-14",
+        "summary": "Redesign the global UI theme to a mobile-first “everything tracker” experience that feels fun, helpful, and easy to use, with Apple Settings–style toggle boxes/panels for preferences and settings-like controls across the app.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/layout/AppShell.tsx",
+          "frontend/src/components/dashboard/DashboardSummaryToggles.tsx",
+          "frontend/src/pages/DashboardPage.tsx",
+          "frontend/src/pages/TasksPage.tsx",
+          "frontend/src/pages/GoalsPage.tsx",
+          "frontend/src/pages/CalendarPage.tsx",
+          "frontend/src/pages/BudgetPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/components/layout/AppShell.tsx",
+          "frontend/src/components/dashboard/DashboardSummaryToggles.tsx",
+          "frontend/src/pages/DashboardPage.tsx",
+          "frontend/src/pages/TasksPage.tsx",
+          "frontend/src/pages/GoalsPage.tsx",
+          "frontend/src/pages/CalendarPage.tsx",
+          "frontend/src/pages/BudgetPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-15",
+        "summary": "Make security/encryption visibility explicit in the UI by adding clear, friendly copy near data entry areas indicating that entries are protected with encryption/integrity safeguards, without claiming any third-party certification or external security service.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/common/SecurityNote.tsx",
+          "frontend/src/pages/TasksPage.tsx",
+          "frontend/src/pages/GoalsPage.tsx",
+          "frontend/src/pages/CalendarPage.tsx",
+          "frontend/src/pages/BudgetPage.tsx",
+          "frontend/src/pages/CryptoPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/common/SecurityNote.tsx",
+          "frontend/src/pages/TasksPage.tsx",
+          "frontend/src/pages/GoalsPage.tsx",
+          "frontend/src/pages/CalendarPage.tsx",
+          "frontend/src/pages/BudgetPage.tsx",
+          "frontend/src/pages/CryptoPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-16",
+        "summary": "Provide 2–3 in-app example entries/templates in each organizer section (Tasks, Goals, Calendar, Budget, and Crypto) to guide users on what information best pertains to each area, shown as examples when the user has no items yet and/or as quick-add suggestions.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/common/SectionExamples.tsx",
+          "frontend/src/components/tasks/TaskList.tsx",
+          "frontend/src/components/goals/GoalList.tsx",
+          "frontend/src/components/calendar/CalendarEntryList.tsx",
+          "frontend/src/pages/BudgetPage.tsx",
+          "frontend/src/components/crypto/CryptoEntryList.tsx",
+          "frontend/src/pages/CryptoPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/common/SectionExamples.tsx",
+          "frontend/src/components/tasks/TaskList.tsx",
+          "frontend/src/components/goals/GoalList.tsx",
+          "frontend/src/components/calendar/CalendarEntryList.tsx",
+          "frontend/src/pages/BudgetPage.tsx",
+          "frontend/src/components/crypto/CryptoEntryList.tsx",
+          "frontend/src/pages/CryptoPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-17",
+        "summary": "Add a new \"Crypto\" section to the app, including navigation access, a dedicated page, and basic per-user CRUD tracking for crypto entries, with a UI theme resembling Coinbase (visual style only; no external API integration).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/crypto/useCrypto.ts",
+          "frontend/src/components/crypto/CryptoEntryFormDialog.tsx",
+          "frontend/src/components/crypto/CryptoEntryList.tsx",
+          "frontend/src/components/crypto/CryptoSummary.tsx",
+          "frontend/src/pages/CryptoPage.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/layout/AppShell.tsx",
+          "frontend/src/index.css"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/crypto/useCrypto.ts",
+          "frontend/src/components/crypto/CryptoEntryFormDialog.tsx",
+          "frontend/src/components/crypto/CryptoEntryList.tsx",
+          "frontend/src/components/crypto/CryptoSummary.tsx",
+          "frontend/src/pages/CryptoPage.tsx",
+          "frontend/src/App.tsx",
+          "frontend/src/components/layout/AppShell.tsx",
+          "frontend/src/index.css"
+        ]
+      },
+      {
+        "id": "REQ-18",
+        "summary": "Apply per-section theming so that the Tasks (to-do list) section resembles a sports-related / paper scroll / private theme, while still matching the app’s overall mobile-first tracker design and not harming readability.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/pages/TasksPage.tsx",
+          "frontend/src/components/tasks/TaskList.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css",
+          "frontend/src/pages/TasksPage.tsx",
+          "frontend/src/components/tasks/TaskList.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/auth/RequireAuth.tsx",
+    "frontend/src/components/calendar/CalendarEntryList.tsx",
+    "frontend/src/components/common/PrivacyStatusBar.tsx",
+    "frontend/src/components/common/SectionExamples.tsx",
+    "frontend/src/components/common/SecurityNote.tsx",
+    "frontend/src/components/crypto/CryptoEntryFormDialog.tsx",
+    "frontend/src/components/crypto/CryptoEntryList.tsx",
+    "frontend/src/components/crypto/CryptoSummary.tsx",
+    "frontend/src/components/dashboard/DashboardSummaryToggles.tsx",
+    "frontend/src/components/goals/GoalList.tsx",
+    "frontend/src/components/layout/AppShell.tsx",
+    "frontend/src/components/tasks/TaskList.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/crypto/useCrypto.ts",
+    "frontend/src/index.css",
+    "frontend/src/pages/BudgetPage.tsx",
+    "frontend/src/pages/CalendarPage.tsx",
+    "frontend/src/pages/CryptoPage.tsx",
+    "frontend/src/pages/DashboardPage.tsx",
+    "frontend/src/pages/GoalsPage.tsx",
+    "frontend/src/pages/TasksPage.tsx",
+    "frontend/tailwind.config.js",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

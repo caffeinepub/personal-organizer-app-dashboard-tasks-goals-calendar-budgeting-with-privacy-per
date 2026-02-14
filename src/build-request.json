@@ -1,0 +1,165 @@
+{
+  "kind": "build_request",
+  "title": "Mobile “Everything Tracker” theme refresh + security live status bar + section examples + new Crypto section + fix app loading regression",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-12",
+      "text": "Fix the regression where the app is \"no longer loading\" by identifying and resolving the runtime/build error(s) so the initial route renders successfully and navigation to existing sections (Dashboard, Tasks, Goals, Calendar, Budget) works without a blank screen or crash.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-8"
+        ],
+        "quotes": [
+          "add these to the app that is not longer loading"
+        ]
+      },
+      "acceptanceCriteria": [
+        "App loads to the Dashboard route without a blank screen or uncaught exception in the browser console",
+        "Unauthenticated users see the login screen; authenticated users can navigate to Dashboard/Tasks/Goals/Calendar/Budget",
+        "No infinite loading state occurs during Internet Identity initialization or profile fetching"
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "text": "Add a persistent \"privacy confirmed\" live status indicator bar with a video game themed look that is purple when the user is securely logged in, and flashes/turns red when the session is not secure (e.g., user is not authenticated).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-8"
+        ],
+        "quotes": [
+          "include a purple colored privacy confirmed live status indicator bar (that looks video game themed), which flashes and turns red if not secured session but is purple once logged into the applciation securely"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A status bar is visible in the app shell on all routes (including the login screen)",
+        "When the user is authenticated (Internet Identity identity present), the bar displays a purple \"secure\" state with clear English text (e.g., \"Secure session\" / \"Privacy confirmed\")",
+        "When the user is not authenticated, the bar displays a red state and uses a flashing/pulsing animation to indicate \"not secure\"",
+        "The bar styling reads as \"video game themed\" (e.g., scanlines/glow/pixel-like accents) while remaining legible and accessible"
+      ]
+    },
+    {
+      "id": "REQ-14",
+      "text": "Redesign the global UI theme to a mobile-first “everything tracker” experience that feels fun, helpful, and easy to use, with Apple Settings–style toggle boxes/panels for preferences and settings-like controls across the app.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-8"
+        ],
+        "quotes": [
+          "I want to change the them of the application/website to be a mobile everythng tracker, With a fun and helpful easy to user user interface.",
+          "I want a more friendly theme with toggle boxes and themes similiar to the apple setting menu interface."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Layout and spacing are optimized for mobile first (comfortable touch targets, clear section headers, consistent card/panel spacing) while still looking good on desktop",
+        "Settings-like toggle UI is used where applicable (e.g., dashboard summary toggles) with an Apple Settings–inspired grouped-panel aesthetic",
+        "Theme changes are applied consistently across Dashboard, Tasks, Goals, Calendar, Budget pages (typography, card styles, borders, backgrounds, focus states)",
+        "User-facing text remains in English and is clear and friendly"
+      ]
+    },
+    {
+      "id": "REQ-15",
+      "text": "Make security/encryption visibility explicit in the UI by adding clear, friendly copy near data entry areas indicating that entries are protected with encryption/integrity safeguards, without claiming any third-party certification or external security service.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-8"
+        ],
+        "quotes": [
+          "I want users to be able to tell they are entering there data securily behind encryption"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each organizer section (Tasks, Goals, Calendar, Budget, and the new Crypto section) includes a short, friendly security note in English near the primary entry list/form area",
+        "Copy is non-misleading and avoids unverifiable claims; it communicates that the app protects user entries and that secure login is required",
+        "Security messaging does not block normal usage and remains visually secondary to primary actions"
+      ]
+    },
+    {
+      "id": "REQ-16",
+      "text": "Provide 2–3 in-app example entries/templates in each organizer section (Tasks, Goals, Calendar, Budget, and Crypto) to guide users on what information best pertains to each area, shown as examples when the user has no items yet and/or as quick-add suggestions.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-8"
+        ],
+        "quotes": [
+          "I want the user to be provided 2-3 examples in each section for what information would best pertan to each area of the organizer."
+        ]
+      },
+      "acceptanceCriteria": [
+        "When a section has zero items, the empty state includes 2–3 example suggestions written in English and tailored to that section",
+        "Examples are clearly labeled as examples/templates and are not confused with user data",
+        "Optionally (if implemented), the user can click an example to prefill the add dialog; otherwise examples are purely informational",
+        "Examples exist for Tasks, Goals, Calendar, Budget, and Crypto"
+      ]
+    },
+    {
+      "id": "REQ-17",
+      "text": "Add a new \"Crypto\" section to the app, including navigation access, a dedicated page, and basic per-user CRUD tracking for crypto entries, with a UI theme resembling Coinbase (visual style only; no external API integration).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-8"
+        ],
+        "quotes": [
+          "For the crypto section I want it to resemble coinbases application theme."
+        ]
+      },
+      "acceptanceCriteria": [
+        "A new nav item and route (e.g., /crypto) is available for authenticated users and visible in the app shell navigation",
+        "Crypto page supports creating, listing, editing, and deleting crypto entries scoped to the signed-in user",
+        "Crypto page includes a simple summary area (e.g., total positions count and/or grouped by asset) computed client-side",
+        "Crypto UI uses a Coinbase-like visual feel (clean finance-app surfaces, restrained palette, clear typography) while staying consistent with the app’s overall design system",
+        "No Coinbase APIs or third-party crypto price feeds are used"
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "text": "Apply per-section theming so that the Tasks (to-do list) section resembles a sports-related / paper scroll / private theme, while still matching the app’s overall mobile-first tracker design and not harming readability.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-8"
+        ],
+        "quotes": [
+          "for the to do list I want it to resemble a sports related / paper scroll  / private theme."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Tasks page (and key task components) has distinct visual styling evoking a sports + paper-scroll + private feel (e.g., textured background effect via CSS, badge styling, header treatment)",
+        "Theming remains accessible (sufficient contrast, readable fonts) and does not break existing interactions (add/edit/complete/delete)",
+        "Other sections retain their own appropriate styling and do not inherit the Tasks-specific look unintentionally"
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not edit files in frontend immutablePaths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui (compose these components instead).",
+    "Backend must remain a single Motoko actor in backend/main.mo; add new data types and methods there if needed.",
+    "Do not add external databases, third-party auth providers, WebSockets, or external crypto/Coinbase API integrations.",
+    "Use English for all user-facing UI text."
+  ],
+  "nonGoals": [
+    "Implementing real-time price updates, portfolio performance charts using external market data, or syncing with Coinbase accounts",
+    "Adding push notifications, email/SMS messaging, or social login",
+    "Rebuilding existing Tasks/Goals/Calendar/Budget CRUD behavior beyond what is necessary for theme/examples/security-indicator integration"
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}
